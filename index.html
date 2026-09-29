@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" data-mood="dark" data-img="image">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Darian Lalla — Data Science, Machine Learning & Creative Technology</title>
+    <meta
+      name="description"
+      content="Darian Lalla is a data scientist and creative technologist building machine learning systems, automation, and interactive work where rigorous data meets visual imagination."
+    />
+    <meta name="theme-color" content="#161616" />
+    <meta property="og:title" content="Darian Lalla — Data Science, Machine Learning & Creative Technology" />
+    <meta
+      property="og:description"
+      content="Machine learning, data science and creative technology. Models, pipelines and interactive work where rigorous data meets visual imagination."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://darskye.github.io/darian-lalla/" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <script>
+      try {
+        var s = JSON.parse(localStorage.getItem("dl-settings") || "{}");
+        if (s.mood) document.documentElement.dataset.mood = s.mood;
+        if (s.img) document.documentElement.dataset.img = s.img;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      <p style="font-family: monospace; padding: 16px">
+        Darian Lalla — data scientist &amp; creative technologist. darianslalla@gmail.com
+      </p>
+    </noscript>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
