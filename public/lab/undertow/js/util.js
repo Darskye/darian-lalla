@@ -38,7 +38,7 @@ export function escapeHTML(s) {
 // Row order matters: shaders pick a palette by row index (see flow.js).
 export const PALETTES = {
   heat: ["#2a56b0", "#2f86c8", "#5cb6dc", "#a9dcec", "#eee7d2", "#f8c47c", "#f2904e", "#e4573c", "#c8324a"],
-  anomaly: ["#3b6fd0", "#5f98e0", "#9cc2ea", "#c9d3dc", "#8f959e", "#e9b59b", "#f08a5f", "#e2553c", "#c7293b"],
+  anomaly: ["#3b6fd0", "#5f98e0", "#9cc2ea", "#cfd8e2", "#b9bec6", "#ecc0a6", "#f08a5f", "#e2553c", "#c7293b"],
   speed: ["#1c3570", "#1f62a6", "#2e97c8", "#63c6da", "#b8e9ec", "#ffffff"],
   spin: ["#3f86e0", "#6aa8e6", "#9fc4e8", "#8d929c", "#efb49a", "#ec7c5e", "#dc4638"],
   air: ["#6b4fd8", "#3f73e6", "#2fa4d6", "#4fc7b0", "#b9df8a", "#f4d06a", "#f59c4c", "#e4583b", "#b8243f"],

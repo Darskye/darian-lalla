@@ -145,6 +145,7 @@ async function enterRoom(room, opts = {}) {
     if (token !== loadToken) return;
   }
   S.sceneKey = sceneKey;
+  if (room !== "forecast") { ui.splitLabels.hidden = true; ui.splitHandle.hidden = true; }
   ui.eyebrow.textContent = `Room ${R.n} · ${R.name}`;
   ui.title.textContent = R.title;
   ui.lede.textContent = R.lede;
@@ -181,7 +182,7 @@ async function setupOcean(token) {
   S.frames = o.N;
   if (!S.ready || S.t > o.N - 1) S.t = Math.max(0, o.N - 22);
   ui.hint.textContent = "Drag to move · scroll to zoom · hover to read the water";
-  renderOceanPanel(o);
+  if (S.panelKey !== `ocean|${S.region}`) { S.panelKey = `ocean|${S.region}`; renderOceanPanel(o); } else renderOceanStats();
 }
 
 function freeCentre() {
@@ -231,6 +232,7 @@ async function setupForecast(token) {
   S.frames = frames;
   S.t = 0;
   ui.hint.textContent = run.verify ? "Drag the white handle to compare · hover to read both" : "This forecast looks past the newest data";
+  S.panelKey = "forecast";
   renderForecastPanel(o, run, t0);
 }
 function applyForecastView() {
@@ -270,7 +272,7 @@ async function setupWind(token) {
   S.t = clamp(S.t, 0, S.frames - 1);
   if (S.t > S.frames - 1 || !S.windStarted) { S.t = 0; S.windStarted = true; }
   ui.hint.textContent = "Drag to spin the globe · scroll to zoom · hover to read the air";
-  renderWindPanel();
+  if (S.panelKey !== "wind") { S.panelKey = "wind"; renderWindPanel(); } else renderWindStats();
 }
 function applyWindStyle() {
   const jet = S.windLayer === "jet", air = S.windColor === "air" && !jet;
@@ -400,7 +402,7 @@ function renderOceanStats() {
   if (!el) return;
   const sc = scene(), ins = insight(), st = sc.stats;
   const rows = [
-    ["Top speed", `${st.topSpeed.toFixed(2)} m/s · ${(st.topSpeed * 1.944).toFixed(1)} kn`],
+    ["Fastest 0.1%", `${st.topSpeed.toFixed(2)} m/s · ${(st.topSpeed * 1.944).toFixed(1)} kn`],
     ["Mean speed", `${st.meanSpeed.toFixed(2)} m/s`],
     ["Water", `${sc.tmin.toFixed(0)} to ${sc.tmax.toFixed(0)} °C`],
   ];
