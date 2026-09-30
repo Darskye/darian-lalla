@@ -300,9 +300,36 @@ export const ABOUT = [
   "Today I work across the whole arc, from SQL and statistics to machine learning and LLM workflows, and out the other side into WebGL, generative visuals and interactive prototypes. I care about rigor and I care about beauty. The best work has both.",
 ];
 
+// About, told as a signal path: one line that changes character with each chapter.
+export const CHAPTERS = [
+  {
+    code: "01",
+    label: "Environment",
+    word: "SENSE",
+    style: "Organic",
+    text: "I came to data through the environment: air, water, chemicals and the rules wrapped around them. My bachelor's is in Environmental Science and Sustainable Technology, and my first published work was on sensor frameworks for environmental monitoring.",
+  },
+  {
+    code: "02",
+    label: "Data",
+    word: "MEASURE",
+    style: "Quantised",
+    text: "Along the way I learned that compliance, safety and sustainability are really data problems: messy, high-stakes and full of patterns waiting to be found. A master's in Data Science turned that into pipelines, models and tools.",
+  },
+  {
+    code: "03",
+    label: "AI + Art",
+    word: "IMAGINE",
+    style: "Generative",
+    text: "Now I work across the whole arc: machine learning and LLM workflows, and out the other side into WebGL, generative visuals and interactive prototypes. I care about rigor and I care about beauty. The best work has both.",
+  },
+];
+
 export const FACTS = [
+  ["Name", "Darian Lalla"],
+  ["Class", "Data scientist × creative technologist"],
   ["Education", "M.S. Data Science\nB.S. Environmental Science & Sustainable Technology"],
+  ["Path", "Environment → Data → AI"],
   ["Focus", "Machine learning, data science, creative technology"],
-  ["Path", "Environment → data → AI"],
   ["Open to", "Roles, research and collaborations"],
 ];
