@@ -21,4 +21,13 @@ All copy lives in `src/content.js`. Pushing to `main` deploys to GitHub Pages (`
 
 URL params for screenshots: `?t=16` (animation clock), `?y=2400` (scroll), `?img=text`, `?mood=light`.
 
+## Lab: Undertow on real data
+
+`public/lab/undertow/` is a standalone WebGL piece (served at `/lab/undertow/`) that draws real ocean currents measured by satellite altimetry, coloured by NOAA sea-surface temperature, for four regions over the last 59 days. Refresh the data with:
+
+```bash
+pip install numpy scipy netCDF4
+python tools/undertow/fetch_data.py --days 60 --end 2026-09-28
+```
+
 Fonts: Geist and Geist Mono (OFL), and a static wide instance of Anybody (OFL, see `src/fonts/OFL-Anybody.txt`).
