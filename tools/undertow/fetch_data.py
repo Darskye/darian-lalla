@@ -131,8 +131,19 @@ def fill_gaps(u, v, T, ocean):
     return u, v, T
 
 
-def pack(u, v, T, ocean, vmax, tmin, tmax):
-    """Bytes: for each day [u int8 H*W][v int8 H*W][sst uint8 H*W], then mask uint8 H*W.
+def normal_for(sc, days):
+    """1991-2020 average temperature for each display day (from fetch_history.py), or None."""
+    path = CACHE / f"sstnorm_{sc['id']}.npz"
+    if not path.exists():
+        return None
+    d = np.load(path)
+    keys = list(d["mmdd"])
+    return np.stack([d["normal"][keys.index(day[5:])] for day in days])
+
+
+def pack(u, v, T, ocean, vmax, tmin, tmax, anom=None):
+    """Bytes: for each day [u int8 H*W][v int8 H*W][sst uint8 H*W]([anomaly int8 H*W, 0.1 degC]),
+    then mask uint8 H*W.
     Currents use a square-root curve so slow water keeps its detail:
         q = sign(x) * sqrt(|x| / vmax) * 127   ->   x = sign(q) * (q/127)^2 * vmax"""
     def enc(x):
@@ -143,6 +154,8 @@ def pack(u, v, T, ocean, vmax, tmin, tmax):
     parts = []
     for k in range(u.shape[0]):
         parts += [enc(u[k]).tobytes(), enc(v[k]).tobytes(), t8[k].tobytes()]
+        if anom is not None:
+            parts.append(np.round(np.clip(np.nan_to_num(anom[k]) * 10, -127, 127)).astype(np.int8).tobytes())
     parts.append((ocean.astype(np.uint8) * 255).tobytes())
     return gzip.compress(b"".join(parts), compresslevel=9, mtime=0)
 
@@ -175,7 +188,9 @@ def main():
         vmax = float(np.ceil(np.percentile(speed, 99.95) * 10) / 10)
         tmin = float(np.floor(np.min(T[:, ocean])))
         tmax = float(np.ceil(np.max(T[:, ocean])))
-        blob = base64.b64encode(pack(u, v, T, ocean, vmax, tmin, tmax))
+        normal = normal_for(sc, days)
+        anom = None if normal is None else np.where(ocean, T - normal, 0)
+        blob = base64.b64encode(pack(u, v, T, ocean, vmax, tmin, tmax, anom))
         (OUT / f"{sc['id']}.txt").write_bytes(blob)
         H, W = ocean.shape
         manifest["scenes"].append({
@@ -186,6 +201,7 @@ def main():
             "dlon": float(lon[1] - lon[0]), "dlat": float(lat[1] - lat[0]),
             "focus": sc["focus"], "dates": days,
             "vmax": vmax, "tmin": tmin, "tmax": tmax,
+            "planes": 3 if anom is None else 4, "anomScale": 0.1,
             "stats": {
                 # 99.9th percentile, not the max: single cells in lagoons and
                 # inland seas can read 6+ m/s, which is altimetry noise.

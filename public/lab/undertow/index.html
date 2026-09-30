@@ -4,1286 +4,142 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Undertow</title>
-<meta name="description" content="Real ocean currents measured by satellite, drawn as living light. Four regions, the last 59 days.">
+<meta name="description" content="A data exhibit: real ocean currents measured by satellite, a neural operator that forecasts them, and the global winds that drive them.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@150,800&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap">
-<style>
-/* Layout: full-bleed WebGL sea; instrument readouts pinned to the corners on the portfolio's 8/16px character grid; one glass bar carries time. */
-:root {
-  --abyss: #04070d;
-  --ink-rgb: 245 245 240;
-  --ink: rgb(var(--ink-rgb));
-  --ink-2: rgb(var(--ink-rgb) / 0.64);
-  --ink-3: rgb(var(--ink-rgb) / 0.36);
-  --hair: rgb(var(--ink-rgb) / 0.16);
-  --pill: rgb(var(--ink-rgb) / 0.1);
-  --glass: rgb(4 7 13 / 0.64);
-  --warm: #f8b46a;
-  --wide: "Anybody", "Arial Black", Impact, sans-serif;
-  --sans: "Geist", Helvetica, Arial, sans-serif;
-  --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --gut: 16px;
-  --ease: cubic-bezier(0.2, 0.7, 0, 1);
-  color-scheme: dark;
-}
-
-*, *::before, *::after { box-sizing: border-box; }
-[hidden] { display: none !important; }
-html, body { height: 100%; }
-body {
-  margin: 0;
-  background: var(--abyss);
-  color: var(--ink);
-  font: 500 12px/16px var(--mono);
-  letter-spacing: 0.03em;
-  overflow: hidden;
-  -webkit-font-smoothing: antialiased;
-}
-button { font: inherit; color: inherit; letter-spacing: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
-a { color: inherit; }
-:focus-visible { outline: 1px solid var(--warm); outline-offset: 2px; }
-
-#sea { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
-#sea.is-grab { cursor: grabbing; }
-
-/* ---- HUD ------------------------------------------------------------- */
-.hud {
-  position: fixed; inset: 0; pointer-events: none;
-  padding: calc(var(--gut) + env(safe-area-inset-top, 0px)) var(--gut) calc(var(--gut) + env(safe-area-inset-bottom, 0px));
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-rows: auto 1fr auto auto;
-  grid-template-areas: "head nav" ". ." "legend stats" "time time";
-  gap: 16px;
-  transition: opacity 0.5s var(--ease);
-}
-.hud > * { pointer-events: auto; min-width: 0; }
-.hud.is-off { opacity: 0; }
-.hud.is-off > * { pointer-events: none; }
-
-.head { grid-area: head; display: grid; gap: 8px; align-content: start; text-shadow: 0 1px 12px rgb(0 0 0 / 0.6); }
-.eyebrow { margin: 0; color: var(--ink-2); text-transform: uppercase; }
-.eyebrow b { color: var(--warm); font-weight: 500; }
-h1 {
-  margin: 0;
-  font: 800 clamp(30px, 4.4vw, 60px) / 0.9 var(--wide);
-  font-stretch: 150%;
-  letter-spacing: -0.01em;
-  text-transform: uppercase;
-}
-.scene { display: grid; gap: 2px; margin-top: 8px; }
-.scene-name { margin: 0; font: 500 18px/24px var(--sans); letter-spacing: 0; text-wrap: balance; }
-.scene-where { margin: 0; color: var(--ink-2); text-transform: uppercase; }
-.blurb { margin: 4px 0 0; max-width: 38ch; font: 400 14px/20px var(--sans); letter-spacing: 0; color: var(--ink-2); }
-
-.nav { grid-area: nav; display: grid; gap: 12px; justify-items: end; align-content: start; }
-.group { display: grid; gap: 6px; justify-items: end; }
-.group-label { color: var(--ink-3); text-transform: uppercase; }
-.chips { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
-.chip {
-  padding: 4px 10px; border-radius: 999px; text-transform: uppercase;
-  color: var(--ink-2); border: 1px solid var(--hair); background: var(--glass);
-  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-  transition: color 0.2s, background-color 0.2s, border-color 0.2s;
-}
-.chip:hover { color: var(--ink); border-color: var(--ink-3); }
-.chip[aria-pressed="true"] { background: var(--ink); color: var(--abyss); border-color: var(--ink); }
-
-.legend { grid-area: legend; align-self: end; width: min(300px, 100%); display: grid; gap: 6px; }
-.legend-title { color: var(--ink-2); text-transform: uppercase; }
-#legendBar { width: 100%; height: 6px; display: block; border-radius: 3px; }
-.ticks { position: relative; height: 16px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
-.ticks span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
-.ticks span.l { transform: none; }
-.ticks span.r { transform: translateX(-100%); }
-
-.stats { grid-area: stats; align-self: end; display: grid; gap: 10px; justify-items: end; }
-.stats dl { margin: 0; display: grid; grid-template-columns: auto auto; column-gap: 16px; row-gap: 0; font-variant-numeric: tabular-nums; }
-.stats dt { color: var(--ink-3); text-transform: uppercase; text-align: right; }
-.stats dd { margin: 0; text-align: right; }
-.links { display: flex; gap: 4px; }
-
-.time {
-  grid-area: time;
-  display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto auto; align-items: center; gap: 16px;
-  padding: 10px 14px; border: 1px solid var(--hair); border-radius: 12px;
-  background: var(--glass); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-}
-.play { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--ink-3); display: grid; place-items: center; }
-.play:hover { border-color: var(--ink); }
-.play svg { width: 12px; height: 12px; fill: var(--ink); }
-.date { display: grid; gap: 0; min-width: 12ch; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.date strong { font: 500 15px/20px var(--mono); letter-spacing: 0.02em; }
-.date span { color: var(--ink-3); text-transform: uppercase; }
-.scrub { position: relative; height: 36px; }
-.scrub input {
-  position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer;
-}
-.rail { position: absolute; left: 0; right: 0; top: 10px; height: 10px; pointer-events: none; }
-.rail i { position: absolute; bottom: 0; width: 1px; height: 4px; background: var(--ink-3); }
-.rail i.m { height: 10px; background: var(--ink-2); }
-.months { position: absolute; left: 0; right: 0; top: 22px; height: 12px; pointer-events: none; color: var(--ink-3); text-transform: uppercase; font-size: 10px; line-height: 12px; }
-.months span { position: absolute; transform: translateX(2px); white-space: nowrap; }
-.fill { position: absolute; left: 0; top: 19px; height: 1px; background: var(--warm); pointer-events: none; box-shadow: 0 0 8px var(--warm); }
-.knob { position: absolute; top: 4px; width: 2px; height: 18px; margin-left: -1px; background: var(--ink); pointer-events: none; box-shadow: 0 0 10px rgb(var(--ink-rgb) / 0.8); }
-.scrub input:focus-visible ~ .knob { background: var(--warm); }
-.tbtn { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--hair); color: var(--ink-2); text-transform: uppercase; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.tbtn:hover { color: var(--ink); border-color: var(--ink-3); }
-
-.reveal {
-  position: fixed; right: var(--gut); bottom: calc(var(--gut) + env(safe-area-inset-bottom, 0px));
-  padding: 4px 10px; border-radius: 999px; border: 1px solid var(--hair); background: var(--glass);
-  color: var(--ink-2); text-transform: uppercase; opacity: 0; pointer-events: none; transition: opacity 0.4s;
-}
-.hud.is-off ~ .reveal { opacity: 0.55; pointer-events: auto; }
-.reveal:hover { opacity: 1 !important; }
-
-/* ---- probe ----------------------------------------------------------- */
-.probe {
-  position: fixed; left: 0; top: 0; pointer-events: none; z-index: 3;
-  padding: 6px 8px; border-radius: 6px; border: 1px solid var(--hair);
-  background: var(--glass); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-  font-size: 11px; line-height: 15px; white-space: nowrap; font-variant-numeric: tabular-nums;
-}
-.probe b { font-weight: 500; }
-.probe span { color: var(--ink-2); }
-
-/* ---- about ----------------------------------------------------------- */
-.about {
-  position: fixed; z-index: 4;
-  top: calc(var(--gut) + env(safe-area-inset-top, 0px)); right: var(--gut);
-  bottom: calc(var(--gut) + env(safe-area-inset-bottom, 0px));
-  width: min(440px, calc(100% - 2 * var(--gut)));
-  overflow-y: auto; overscroll-behavior: contain;
-  padding: 20px; border: 1px solid var(--hair); border-radius: 14px;
-  background: rgb(4 7 13 / 0.86); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
-  display: grid; gap: 20px; align-content: start;
-}
-.about header { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
-.about h2 { margin: 0; font: 800 20px/1 var(--wide); font-stretch: 150%; text-transform: uppercase; }
-.about h3 { margin: 0 0 6px; font: 500 12px/16px var(--mono); color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; }
-.about p { margin: 0; font: 400 14px/21px var(--sans); letter-spacing: 0; color: var(--ink-2); }
-.about p + p { margin-top: 8px; }
-.about p strong { color: var(--ink); font-weight: 500; }
-.about dl { margin: 8px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 16px; font-variant-numeric: tabular-nums; }
-.about dt { color: var(--ink-3); text-transform: uppercase; }
-.about dd { margin: 0; }
-.about ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
-.about li { font: 400 13px/19px var(--sans); letter-spacing: 0; color: var(--ink-2); }
-.about li a { color: var(--ink); text-decoration-color: var(--ink-3); text-underline-offset: 3px; }
-
-/* ---- loading --------------------------------------------------------- */
-.loading {
-  position: fixed; inset: 0; z-index: 5; display: grid; place-items: center; pointer-events: none;
-  transition: opacity 0.6s var(--ease);
-}
-.loading.is-done { opacity: 0; }
-.loading-inner { display: grid; gap: 10px; width: min(320px, calc(100% - 2 * var(--gut))); text-align: center; color: var(--ink-2); text-transform: uppercase; }
-.loading-bar { height: 1px; background: var(--hair); position: relative; overflow: hidden; }
-.loading-bar i { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--warm); transition: width 0.2s; }
-.loading.is-error .loading-inner { color: var(--ink); text-transform: none; font: 400 14px/21px var(--sans); }
-
-/* ---- narrow ---------------------------------------------------------- */
-@media (max-width: 760px) {
-  .hud {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto 1fr auto auto;
-    grid-template-areas: "head" "nav" "." "legend" "time";
-    gap: 12px;
-  }
-  .blurb, .stats { display: none; }
-  .nav { justify-items: start; gap: 8px; }
-  .group { justify-items: start; grid-template-columns: auto; }
-  .group-label { display: none; }
-  .chips { justify-content: flex-start; }
-  .scene { margin-top: 4px; }
-  .time {
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
-    grid-template-areas: "play date rate trail" "scrub scrub scrub scrub";
-    row-gap: 4px; column-gap: 8px; padding: 8px 12px;
-  }
-  .date { min-width: 0; }
-  .date strong { font-size: 14px; }
-  .time .tbtn { padding: 4px 8px; font-size: 11px; }
-  .play { grid-area: play; }
-  .date { grid-area: date; }
-  .scrub { grid-area: scrub; }
-  #rate { grid-area: rate; }
-  #trail { grid-area: trail; }
-  .legend { width: 100%; }
-}
-@media (hover: none) { .probe { display: none; } .probe.is-tap { display: block; } }
-@media (prefers-reduced-motion: reduce) { .hud, .loading, .chip { transition: none; } }
-</style>
+<link rel="stylesheet" href="undertow.css">
 </head>
 <body>
-<canvas id="sea" aria-label="Animated map of ocean currents"></canvas>
+<canvas id="sea" aria-label="Animated map of the selected data"></canvas>
+<div class="callouts" id="callouts"></div>
+<div class="split-labels" id="splitLabels" hidden><span class="l" data-obstacle>What happened</span><span class="r" data-obstacle>What the model predicted</span></div>
+<button class="split-handle" id="splitHandle" hidden data-obstacle aria-label="Drag to compare reality and forecast">
+  <svg viewBox="0 0 14 14" aria-hidden="true"><path d="M5 3 1 7l4 4M9 3l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+</button>
 
 <div class="hud" id="hud">
-  <header class="head">
-    <p class="eyebrow">[ C01 ] &nbsp;<b>Real ocean data</b></p>
-    <h1>Undertow</h1>
-    <div class="scene">
-      <p class="scene-name" id="sceneName">Gulf Stream</p>
-      <p class="scene-where" id="sceneWhere">North Atlantic</p>
-      <p class="blurb" id="sceneBlurb"></p>
+  <header class="top" data-obstacle>
+    <button class="mark" id="markBtn" title="Back to the start"><span class="mark-code">[ C01 ]</span><span class="mark-name">Undertow</span></button>
+    <nav class="rooms glass" aria-label="Rooms">
+      <button class="room" id="room-ocean" data-room="ocean" aria-pressed="true"><span>01</span>Ocean</button>
+      <button class="room" id="room-forecast" data-room="forecast" aria-pressed="false"><span>02</span>Forecast</button>
+      <button class="room" id="room-wind" data-room="wind" aria-pressed="false"><span>03</span>Wind</button>
+    </nav>
+    <div class="top-actions">
+      <button class="tbtn insights-btn" id="insightsBtn" aria-controls="rightPanel" aria-expanded="false">Insights</button>
+      <button class="tbtn" id="tourBtn" aria-pressed="false" title="Let the exhibit guide itself">Tour</button>
+      <button class="tbtn" id="aboutBtn" aria-controls="about" aria-expanded="false">About</button>
+      <button class="tbtn" id="fullBtn" title="Full screen (F)">Full screen</button>
+      <button class="tbtn" id="hideBtn" title="Hide controls (H)">Hide UI</button>
     </div>
   </header>
 
-  <nav class="nav" aria-label="View">
-    <div class="group">
-      <span class="group-label" id="regionLabel">Region</span>
-      <div class="chips" id="scenes" role="group" aria-labelledby="regionLabel"></div>
+  <section class="left glass" id="leftPanel" data-obstacle aria-live="polite">
+    <p class="eyebrow" id="roomEyebrow">Room 01 · Ocean</p>
+    <h1 class="room-title" id="roomTitle">The ocean's weather</h1>
+    <p class="room-lede" id="roomLede"></p>
+    <div class="control" id="regionControl">
+      <span class="ctl-label" id="regionLabel">Region</span>
+      <div class="chips" id="regions" role="group" aria-labelledby="regionLabel"></div>
     </div>
-    <div class="group">
-      <span class="group-label" id="modeLabel">Colour by</span>
-      <div class="chips" id="modes" role="group" aria-labelledby="modeLabel">
-        <button class="chip" id="mode-heat" data-mode="0" aria-pressed="true">Heat</button>
-        <button class="chip" id="mode-speed" data-mode="1" aria-pressed="false">Speed</button>
-        <button class="chip" id="mode-spin" data-mode="2" aria-pressed="false">Spin</button>
-      </div>
+    <div class="control" id="runControl" hidden>
+      <span class="ctl-label" id="runLabel">Forecast starts</span>
+      <div class="chips" id="runs" role="group" aria-labelledby="runLabel"></div>
     </div>
-  </nav>
-
-  <div class="legend">
-    <span class="legend-title" id="legendTitle">Sea-surface temperature · °C</span>
-    <canvas id="legendBar" width="300" height="6"></canvas>
-    <div class="ticks" id="legendTicks"></div>
-  </div>
-
-  <div class="stats">
-    <dl id="stats"></dl>
-    <div class="links">
-      <button class="tbtn" id="aboutBtn" aria-controls="about" aria-expanded="false">About the data</button>
-      <button class="tbtn" id="hideBtn" title="Hide controls (H)">Hide UI</button>
+    <div class="control" id="modeControl">
+      <span class="ctl-label" id="modeLabel">Colour by</span>
+      <div class="chips" id="modes" role="group" aria-labelledby="modeLabel"></div>
     </div>
-  </div>
+    <div class="control" id="layerControl" hidden>
+      <span class="ctl-label" id="layerLabel">Layers</span>
+      <div class="chips" id="layers" role="group" aria-labelledby="layerLabel"></div>
+    </div>
+    <div class="legend">
+      <span class="legend-title" id="legendTitle">Sea-surface temperature · °C</span>
+      <canvas id="legendBar" width="300" height="6"></canvas>
+      <div class="ticks" id="legendTicks"></div>
+    </div>
+    <p class="hint" id="hint">Drag to move · scroll to zoom · hover to read the water</p>
+  </section>
 
-  <div class="time">
+  <aside class="right" id="rightPanel" data-obstacle aria-label="Insights"></aside>
+
+  <div class="timebar glass" id="timebar" data-obstacle>
     <button class="play" id="play" aria-label="Pause">
       <svg viewBox="0 0 12 12" id="playIcon" aria-hidden="true"><rect x="2" y="1" width="3" height="10"/><rect x="7" y="1" width="3" height="10"/></svg>
     </button>
-    <div class="date" aria-live="off">
+    <div class="date">
       <strong id="date">—</strong>
-      <span id="dayOf">Day — of —</span>
+      <span id="dateSub">—</span>
     </div>
     <div class="scrub">
       <div class="rail" id="rail"></div>
-      <div class="months" id="months"></div>
+      <div class="marks" id="marks"></div>
       <div class="fill" id="fill"></div>
       <div class="knob" id="knob"></div>
-      <input type="range" id="scrubber" min="0" max="58" step="0.01" value="0" aria-label="Date">
+      <input type="range" id="scrubber" min="0" max="1" step="0.01" value="0" aria-label="Time">
     </div>
-    <button class="tbtn" id="rate" title="Days of data per second">1 day/s</button>
-    <button class="tbtn" id="trail" title="Trail length">Trail: mid</button>
+    <button class="tbtn" id="rate" title="Playback speed">1×</button>
   </div>
 </div>
 <button class="reveal" id="reveal">Show UI</button>
-
+<div class="tour-chip" id="tourChip" hidden><span id="tourCaption">Tour</span><small>Touch anywhere to explore</small></div>
 <div class="probe" id="probe" hidden></div>
 
-<aside class="about" id="about" hidden aria-labelledby="aboutTitle">
+<section class="intro" id="intro" aria-labelledby="introTitle">
+  <div class="intro-inner">
+    <p class="eyebrow">[ C01 ] · A data exhibit</p>
+    <h1 class="intro-title" id="introTitle">Undertow</h1>
+    <p class="intro-sub">The ocean has weather too. Satellites measure it from space, and a machine learns to forecast it.</p>
+    <ol class="intro-rooms">
+      <li><button class="intro-card glass" data-room="ocean"><span class="n">Room 01</span><span class="t">Ocean</span><span class="d">59 days of real currents, eddies and marine heatwaves across four of the world's great currents, and 45 years of warming.</span></button></li>
+      <li><button class="intro-card glass" data-room="forecast"><span class="n">Room 02</span><span class="t">Forecast</span><span class="d">A neural operator trained on seven years of satellite maps, tested against what the ocean actually did.</span></button></li>
+      <li><button class="intro-card glass" data-room="wind"><span class="n">Room 03</span><span class="t">Wind</span><span class="d">The whole planet's winds, storms and rain from NOAA's weather model, three days ahead.</span></button></li>
+    </ol>
+    <dl class="intro-stats" id="introStats"></dl>
+    <div class="intro-foot">
+      <button class="begin" id="begin">Begin</button>
+      <p id="introNote">Real data from NOAA · Free and open</p>
+    </div>
+  </div>
+</section>
+
+<aside class="about glass" id="about" hidden aria-labelledby="aboutTitle">
   <header>
     <h2 id="aboutTitle">About</h2>
     <button class="tbtn" id="aboutClose">Close</button>
   </header>
   <section>
     <h3>What you're seeing</h3>
-    <p>Each thread of light is a tracer released into real surface currents. In Heat mode its colour is that day's sea-surface temperature, and it glows brighter where the water moves faster. The timeline plays <strong id="aDays">59 days</strong> of data, <span id="aRange"></span>.</p>
-    <p>Speed mode colours by how fast the water moves. Spin mode shows eddies: blue water turns the same way as the Earth (cyclonic, usually a cold core), red turns against it (anticyclonic, usually a warm core).</p>
+    <p>Every thread of light is a tracer carried by real measured or forecast flow. Tracers run tens of thousands of times faster than the water or air so that a day's pattern shows up in about a second. Each room's insights give the exact time-lapse factor.</p>
   </section>
   <section>
-    <h3>How satellites measure currents</h3>
-    <p>Radar altimeters on satellites measure the height of the sea surface to within a few centimetres. Warm eddies bulge up and cold ones dip down. Because the Earth rotates, water flows along those slopes instead of down them, so the shape of the surface gives the current. NOAA turns it into a daily current map on a 25&nbsp;km grid.</p>
-    <p>Temperature comes from NOAA's daily OISST analysis, which blends satellite readings with ships and buoys.</p>
+    <h3>Ocean</h3>
+    <p>Radar altimeters on satellites measure the height of the sea surface to within a few centimetres. Warm eddies bulge up and cold ones dip. Because the Earth rotates, water flows along those slopes rather than down them, so the shape of the surface gives the current. NOAA turns it into daily current maps on a 25&nbsp;km grid. Temperature comes from NOAA's daily OISST analysis, which blends satellites, ships and buoys. "Vs normal" compares each day with its 1991–2020 average.</p>
+    <p>Eddies are found automatically wherever spin beats stretching (the Okubo–Weiss test), then followed from day to day. Their size is the radius of the fastest swirling ring.</p>
   </section>
   <section>
-    <h3>What's measured and what's drawn</h3>
-    <p>Currents, temperatures, coastlines and dates are measured. The tracers are a drawing tool: they run about <strong id="aLapse">×50,000</strong> faster than the water so that a day's pattern shows up in a second. A 25&nbsp;km grid resolves eddies and jets, but it misses tides, wind drift and swirls smaller than about 50&nbsp;km.</p>
+    <h3>The model</h3>
+    <p id="aboutModel">A Fourier neural operator. It rewrites the last three days of currents as waves, keeps the largest ones, mixes them with weights it learned, and turns the result back into tomorrow's map. Feeding each forecast back in gives 14 days. It was trained on 2019–2024, tuned on 2025 and graded only on 2026, which it never saw.</p>
   </section>
   <section>
-    <h3 id="aSceneTitle">This region</h3>
-    <p id="aBlurb"></p>
-    <dl id="aStats"></dl>
-  </section>
-  <section>
-    <h3>Next</h3>
-    <p>Undertow's concept is a neural operator that learns to forecast these fields. This piece is the data layer that model would train on.</p>
+    <h3>Wind</h3>
+    <p>Surface wind (10&nbsp;m), the jet stream (250&nbsp;hPa, about 10&nbsp;km up), air temperature, rain and pressure from one run of NOAA's Global Forecast System, every 6 hours for 72 hours. The globe's shadow shows where it is night at that hour.</p>
   </section>
   <section>
     <h3>Sources</h3>
-    <ul id="aSources"></ul>
+    <ul id="sources"></ul>
   </section>
 </aside>
 
 <div class="loading" id="loading" role="status">
-  <div class="loading-inner">
-    <span id="loadingText">Loading ocean data</span>
+  <div class="loading-inner glass">
+    <span id="loadingText">Loading</span>
     <div class="loading-bar"><i id="loadingBar"></i></div>
   </div>
 </div>
 
-<script>
-(() => {
-"use strict";
-
-const $ = (s) => document.querySelector(s);
-const canvas = $("#sea");
-const ui = {
-  hud: $("#hud"), loading: $("#loading"), loadingText: $("#loadingText"), loadingBar: $("#loadingBar"),
-  sceneName: $("#sceneName"), sceneWhere: $("#sceneWhere"), sceneBlurb: $("#sceneBlurb"),
-  scenes: $("#scenes"), modes: $("#modes"), legendTitle: $("#legendTitle"), legendBar: $("#legendBar"),
-  legendTicks: $("#legendTicks"), stats: $("#stats"), date: $("#date"), dayOf: $("#dayOf"),
-  scrubber: $("#scrubber"), rail: $("#rail"), months: $("#months"), fill: $("#fill"), knob: $("#knob"),
-  play: $("#play"), playIcon: $("#playIcon"), rate: $("#rate"), trail: $("#trail"),
-  probe: $("#probe"), about: $("#about"), aboutBtn: $("#aboutBtn"), aboutClose: $("#aboutClose"),
-  hideBtn: $("#hideBtn"), reveal: $("#reveal"),
-};
-
-function fail(msg) {
-  ui.loading.classList.add("is-error");
-  ui.loading.classList.remove("is-done");
-  ui.loadingText.textContent = msg;
-  ui.loadingBar.parentElement.hidden = true;
-}
-
-const gl = canvas.getContext("webgl2", { antialias: false, alpha: false, depth: false, stencil: false, premultipliedAlpha: false, powerPreference: "high-performance" });
-if (!gl) { fail("This piece needs WebGL 2, which this browser has switched off or doesn't support. A recent Chrome, Firefox, Edge or Safari will run it."); return; }
-const floatTrails = !!gl.getExtension("EXT_color_buffer_float");
-
-const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-// ---------------------------------------------------------------- palettes
-// Heat follows the portfolio's thermal ramp, lifted at both ends so cold and
-// hot water both read on a black sea.
-const PALETTES = [
-  ["#2a56b0", "#2f86c8", "#5cb6dc", "#a9dcec", "#eee7d2", "#f8c47c", "#f2904e", "#e4573c", "#c8324a"],
-  ["#1c3570", "#1f62a6", "#2e97c8", "#63c6da", "#b8e9ec", "#ffffff"],
-  ["#3f86e0", "#6aa8e6", "#9fc4e8", "#8d929c", "#efb49a", "#ec7c5e", "#dc4638"],
-];
-const LEGEND_TITLES = ["Sea-surface temperature · °C", "Current speed · m/s", "Eddy spin"];
-const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-function ramp(stops, n = 256) {
-  const c = stops.map(hexRgb), out = new Uint8Array(n * 4);
-  for (let i = 0; i < n; i++) {
-    const x = (i / (n - 1)) * (c.length - 1), k = Math.min(Math.floor(x), c.length - 2), f = x - k;
-    for (let j = 0; j < 3; j++) out[i * 4 + j] = Math.round(c[k][j] + (c[k + 1][j] - c[k][j]) * f);
-    out[i * 4 + 3] = 255;
-  }
-  return out;
-}
-
-// ---------------------------------------------------------------- shaders
-const FIELD = `
-precision highp float;
-precision highp sampler2DArray;
-uniform sampler2DArray u_field;   // r,g = east/north current (m/s), b = temperature 0..1, a = ocean mask
-uniform float u_day0, u_day1, u_mix;
-vec4 field(vec2 uv) {
-  return mix(texture(u_field, vec3(uv, u_day0)), texture(u_field, vec3(uv, u_day1)), u_mix);
-}
-float h21(vec2 p) {
-  vec3 p3 = fract(vec3(p.xyx) * 0.1031);
-  p3 += dot(p3, p3.yzx + 33.33);
-  return fract((p3.x + p3.y) * p3.z);
-}`;
-
-const UPDATE_VS = `#version 300 es
-${FIELD}
-layout(location = 0) in vec4 a_state;   // x, y (domain uv), age (s), id
-out vec4 v_state;
-uniform vec2 u_mPerUv;                   // metres across the domain at the equator, and north-south
-uniform float u_lat0, u_latSpan, u_step, u_dt, u_life, u_seed;
-uniform vec4 u_view;                     // visible part of the domain, uv min / max
-
-vec2 vel(vec2 p) {
-  float lat = radians(u_lat0 + p.y * u_latSpan);
-  return field(p).xy / vec2(u_mPerUv.x * max(cos(lat), 0.05), u_mPerUv.y);
-}
-void main() {
-  vec2 p = a_state.xy;
-  float age = a_state.z, id = a_state.w;
-  vec2 k1 = vel(p) * u_step;
-  p += vel(p + 0.5 * k1) * u_step;
-  age += u_dt;
-  float life = u_life * (0.5 + h21(vec2(id, 7.1)));
-  vec2 lo = u_view.xy - 0.02, hi = u_view.zw + 0.02;
-  bool dead = age > life || p.x < lo.x || p.y < lo.y || p.x > hi.x || p.y > hi.y || field(p).a < 0.5;
-  if (dead) {
-    vec2 q = p;
-    for (int i = 0; i < 8; i++) {
-      float fi = float(i);
-      q = mix(u_view.xy, u_view.zw, vec2(h21(vec2(id, u_seed + fi * 1.37)), h21(vec2(u_seed * 1.91 + fi, id * 0.73))));
-      if (field(q).a > 0.5) break;
-    }
-    p = q;
-    age = 0.0;
-  }
-  v_state = vec4(p, age, id);
-}`;
-
-const UPDATE_FS = `#version 300 es
-precision highp float;
-out vec4 o;
-void main() { o = vec4(0.0); }`;
-
-const DRAW_VS = `#version 300 es
-${FIELD}
-layout(location = 0) in vec4 a_prev;
-layout(location = 1) in vec4 a_cur;
-layout(location = 2) in float a_end;
-uniform vec2 u_D, u_c, u_res, u_cell, u_mCell;
-uniform float u_s, u_life, u_vmax, u_gain, u_lat0, u_latSpan;
-uniform int u_mode;
-uniform sampler2D u_pal;
-out vec3 v_col;
-
-float spin(vec2 p) {
-  float lat = radians(u_lat0 + p.y * u_latSpan);
-  vec2 e = u_cell;
-  float dvdx = (field(p + vec2(e.x, 0.0)).y - field(p - vec2(e.x, 0.0)).y) / (2.0 * u_mCell.x * max(cos(lat), 0.05));
-  float dudy = (field(p + vec2(0.0, e.y)).x - field(p - vec2(0.0, e.y)).x) / (2.0 * u_mCell.y);
-  float f = 2.0 * 7.2921e-5 * sin(lat);
-  return clamp((dvdx - dudy) / f / 0.35, -1.0, 1.0);   // Rossby number, cyclonic > 0 in both hemispheres
-}
-void main() {
-  bool fresh = a_cur.z < a_prev.z || a_cur.z < 1e-4;
-  vec2 p = (a_end < 0.5 && !fresh) ? a_prev.xy : a_cur.xy;
-  vec2 m = (p - 0.5) * u_D;
-  gl_Position = vec4((m - u_c) * u_s / (0.5 * u_res), 0.0, 1.0);
-
-  vec4 f = field(a_cur.xy);
-  float sn = sqrt(clamp(length(f.xy) / u_vmax, 0.0, 1.0));
-  float x, bright, row;
-  if (u_mode == 0) { x = f.z; bright = 0.16 + 0.84 * sn * sn; row = 0.5; }
-  else if (u_mode == 1) { x = sn; bright = 0.14 + 0.86 * sn * sn; row = 1.5; }
-  else { float r = spin(a_cur.xy); x = 0.5 - 0.5 * r; bright = 0.12 + 0.88 * abs(r); row = 2.5; }
-  vec3 col = texture(u_pal, vec2(x, row / 3.0)).rgb;
-  float life = u_life * (0.5 + h21(vec2(a_cur.w, 7.1)));
-  float fade = smoothstep(0.0, 0.5, a_cur.z) * (1.0 - smoothstep(life - 0.6, life, a_cur.z));
-  v_col = fresh ? vec3(0.0) : col * bright * fade * step(0.5, f.a) * u_gain;
-}`;
-
-const DRAW_FS = `#version 300 es
-precision highp float;
-in vec3 v_col;
-out vec4 o;
-void main() { o = vec4(v_col, 1.0); }`;
-
-const QUAD_VS = `#version 300 es
-void main() {
-  vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
-  gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
-}`;
-
-const FADE_FS = `#version 300 es
-precision highp float;
-uniform sampler2D u_prev;
-uniform vec2 u_res, u_c0, u_c1;
-uniform float u_s0, u_s1, u_fade;
-uniform bool u_q8;
-out vec4 o;
-void main() {
-  // Re-project last frame's trails into the current view so pans and zooms keep them.
-  vec2 m = u_c1 + (gl_FragCoord.xy - 0.5 * u_res) / u_s1;
-  vec2 uv = ((m - u_c0) * u_s0 + 0.5 * u_res) / u_res;
-  vec4 c = vec4(0.0);
-  if (all(greaterThanEqual(uv, vec2(0.0))) && all(lessThanEqual(uv, vec2(1.0)))) c = texture(u_prev, uv);
-  c *= u_fade;
-  if (u_q8) c = floor(c * 255.0) / 255.0;
-  o = c;
-}`;
-
-const COMPOSE_FS = `#version 300 es
-${FIELD}
-uniform sampler2D u_trail, u_pal;
-uniform vec2 u_res, u_D, u_c, u_tex, u_cell, u_mCell;
-uniform float u_s, u_dpr, u_exposure, u_time, u_vmax, u_lat0, u_latSpan, u_lonc, u_latc, u_cosc;
-uniform int u_mode;
-out vec4 o;
-
-vec4 cubicW(float v) {
-  vec4 n = vec4(1.0, 2.0, 3.0, 4.0) - v;
-  vec4 s = n * n * n;
-  float x = s.x, y = s.y - 4.0 * s.x, z = s.z - 4.0 * s.y + 6.0 * s.x;
-  return vec4(x, y, z, 6.0 - x - y - z) / 6.0;
-}
-vec4 bicubic(vec2 uv, float layer) {   // smooth B-spline sampling from four bilinear taps
-  vec2 t = uv * u_tex - 0.5, f = fract(t);
-  t -= f;
-  vec4 xc = cubicW(f.x), yc = cubicW(f.y);
-  vec4 c = t.xxyy + vec2(-0.5, 1.5).xyxy;
-  vec4 s = vec4(xc.xz + xc.yw, yc.xz + yc.yw);
-  vec4 off = (c + vec4(xc.yw, yc.yw) / s) / u_tex.xxyy;
-  vec4 a = texture(u_field, vec3(off.xz, layer)), b = texture(u_field, vec3(off.yz, layer));
-  vec4 d = texture(u_field, vec3(off.xw, layer)), e = texture(u_field, vec3(off.yw, layer));
-  float sx = s.x / (s.x + s.y), sy = s.z / (s.z + s.w);
-  return mix(mix(e, d, sx), mix(b, a, sx), sy);
-}
-void main() {
-  vec2 px = gl_FragCoord.xy - 0.5 * u_res;
-  vec2 m = u_c + px / u_s;
-  vec2 uv = m / u_D + 0.5;
-  vec3 abyss = vec3(0.016, 0.027, 0.051);
-  vec3 col = abyss;
-  if (all(greaterThanEqual(uv, vec2(0.0))) && all(lessThanEqual(uv, vec2(1.0)))) {
-    vec4 f = mix(bicubic(uv, u_day0), bicubic(uv, u_day1), u_mix);
-    vec3 tint;
-    if (u_mode == 0) tint = texture(u_pal, vec2(f.z, 0.5 / 3.0)).rgb * 0.08;
-    else if (u_mode == 1) tint = texture(u_pal, vec2(sqrt(clamp(length(f.xy) / u_vmax, 0.0, 1.0)), 1.5 / 3.0)).rgb * 0.09;
-    else {
-      float lat = radians(u_lat0 + uv.y * u_latSpan);
-      vec2 e = u_cell;
-      float dvdx = (field(uv + vec2(e.x, 0.0)).y - field(uv - vec2(e.x, 0.0)).y) / (2.0 * u_mCell.x * max(cos(lat), 0.05));
-      float dudy = (field(uv + vec2(0.0, e.y)).x - field(uv - vec2(0.0, e.y)).x) / (2.0 * u_mCell.y);
-      float r = clamp((dvdx - dudy) / (2.0 * 7.2921e-5 * sin(lat)) / 0.35, -1.0, 1.0);
-      tint = texture(u_pal, vec2(0.5 - 0.5 * r, 2.5 / 3.0)).rgb * abs(r) * 0.12;
-    }
-    vec3 sea = abyss + tint;
-    vec2 g = mod(gl_FragCoord.xy, 8.0 * u_dpr) - 4.0 * u_dpr;           // the site's 8px character grid, on land
-    vec3 land = vec3(0.045, 0.052, 0.066) + (1.0 - smoothstep(0.6 * u_dpr, 0.6 * u_dpr + 1.0, length(g))) * 0.05;
-    col = mix(land, sea, smoothstep(0.4, 0.6, f.a));
-    float w = max(fwidth(f.a), 1e-4);
-    col += (1.0 - smoothstep(0.0, 1.3 * w, abs(f.a - 0.5))) * 0.26;       // coastline
-    float lon = u_lonc + m.x / u_cosc, lat = u_latc + m.y;
-    float gx = abs(fract(lon / 5.0 + 0.5) - 0.5) * 5.0 * u_cosc * u_s;
-    float gy = abs(fract(lat / 5.0 + 0.5) - 0.5) * 5.0 * u_s;
-    col += min((1.0 - smoothstep(0.0, u_dpr, gx)) + (1.0 - smoothstep(0.0, u_dpr, gy)), 1.0) * 0.05;   // 5° graticule
-  }
-  vec3 tr = texture(u_trail, gl_FragCoord.xy / u_res).rgb;
-  col += 1.0 - exp(-tr * u_exposure);
-  vec2 q = gl_FragCoord.xy / u_res - 0.5;
-  col *= 1.0 - 0.38 * smoothstep(0.25, 0.75, length(q));
-  float n = fract(sin(dot(gl_FragCoord.xy + fract(u_time) * 97.0, vec2(12.9898, 78.233))) * 43758.5453);
-  col += (n - 0.5) * 0.02;
-  o = vec4(col, 1.0);
-}`;
-
-function compile(type, src) {
-  const s = gl.createShader(type);
-  gl.shaderSource(s, src);
-  gl.compileShader(s);
-  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
-  return s;
-}
-function program(vs, fs, varyings) {
-  const p = gl.createProgram();
-  gl.attachShader(p, compile(gl.VERTEX_SHADER, vs));
-  gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
-  if (varyings) gl.transformFeedbackVaryings(p, varyings, gl.SEPARATE_ATTRIBS);
-  gl.linkProgram(p);
-  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
-  const u = {};
-  const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
-  for (let i = 0; i < n; i++) {
-    const name = gl.getActiveUniform(p, i).name;
-    u[name] = gl.getUniformLocation(p, name);
-  }
-  return { p, u };
-}
-
-let P;
-try {
-  P = {
-    update: program(UPDATE_VS, UPDATE_FS, ["v_state"]),
-    draw: program(DRAW_VS, DRAW_FS),
-    fade: program(QUAD_VS, FADE_FS),
-    compose: program(QUAD_VS, COMPOSE_FS),
-  };
-} catch (e) {
-  console.error(e);
-  fail("The graphics card refused one of the shaders, so the piece can't start. Details are in the browser console.");
-  return;
-}
-
-// ---------------------------------------------------------------- GPU resources
-const palTex = gl.createTexture();
-gl.bindTexture(gl.TEXTURE_2D, palTex);
-{
-  const rows = new Uint8Array(256 * 4 * 3);
-  PALETTES.forEach((p, i) => rows.set(ramp(p), i * 256 * 4));
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 256, 3, 0, gl.RGBA, gl.UNSIGNED_BYTE, rows);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-}
-const fieldTex = gl.createTexture();
-const emptyVAO = gl.createVertexArray();
-const endBuf = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, endBuf);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 1]), gl.STATIC_DRAW);
-
-let trails = [];      // two { tex, fbo }
-let parts = null;     // { N, bufs, updVAO, drawVAO, tf }
-let cur = 0, tcur = 0;
-
-function makeTrails(w, h) {
-  trails.forEach((t) => { gl.deleteTexture(t.tex); gl.deleteFramebuffer(t.fbo); });
-  trails = [0, 1].map(() => {
-    const tex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    if (floatTrails) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, w, h, 0, gl.RGBA, gl.HALF_FLOAT, null);
-    else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    const fbo = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    return { tex, fbo };
-  });
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-}
-function clearTrails() {
-  trails.forEach((t) => { gl.bindFramebuffer(gl.FRAMEBUFFER, t.fbo); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT); });
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-}
-
-function makeParticles(N) {
-  if (parts) {
-    parts.bufs.forEach((b) => gl.deleteBuffer(b));
-    parts.updVAO.concat(parts.drawVAO).forEach((v) => gl.deleteVertexArray(v));
-    parts.tf.forEach((t) => gl.deleteTransformFeedback(t));
-  }
-  const v = visibleUV();
-  const init = new Float32Array(N * 4);
-  for (let i = 0; i < N; i++) {
-    init[i * 4] = v[0] + Math.random() * (v[2] - v[0]);
-    init[i * 4 + 1] = v[1] + Math.random() * (v[3] - v[1]);
-    init[i * 4 + 2] = Math.random() * S.life;
-    init[i * 4 + 3] = Math.random() * 1000;
-  }
-  const bufs = [0, 1].map(() => {
-    const b = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, b);
-    gl.bufferData(gl.ARRAY_BUFFER, init, gl.DYNAMIC_COPY);
-    return b;
-  });
-  const updVAO = bufs.map((b) => {
-    const vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
-    gl.bindBuffer(gl.ARRAY_BUFFER, b);
-    gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 0, 0);
-    return vao;
-  });
-  const drawVAO = [0, 1].map((i) => {
-    const vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufs[i]);
-    gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 0, 0);
-    gl.vertexAttribDivisor(0, 1);
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufs[1 - i]);
-    gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 0, 0);
-    gl.vertexAttribDivisor(1, 1);
-    gl.bindBuffer(gl.ARRAY_BUFFER, endBuf);
-    gl.enableVertexAttribArray(2);
-    gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 0, 0);
-    return vao;
-  });
-  const tf = bufs.map((b) => {
-    const t = gl.createTransformFeedback();
-    gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, t);
-    gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, b);
-    return t;
-  });
-  gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
-  gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
-  gl.bindVertexArray(null);
-  gl.bindBuffer(gl.ARRAY_BUFFER, null);
-  parts = { N, bufs, updVAO, drawVAO, tf };
-  cur = 0;
-}
-
-// ---------------------------------------------------------------- state
-const RATES = [0.5, 1, 2, 4];
-const TRAILS = [["short", 0.9], ["mid", 0.955], ["long", 0.982]];
-const S = {
-  manifest: null, sc: null, data: null, cache: new Map(), sceneIdx: 0,
-  mode: 0, playing: !reduceMotion, t: 0, rate: 1, trail: 1,
-  life: 3.6, pxPerSec: reduceMotion ? 60 : 150, gain: 0.13, exposure: 2.1,
-  W: 0, H: 0, dpr: 1,
-  geo: null, view: { cx: 0, cy: 0, z: 1, s: 1 }, last: { cx: 0, cy: 0, s: 1 },
-  seed: 0, lapse: 0, ready: false,
-};
-
-// Map units are degrees, with longitude shrunk by cos(central latitude).
-function geometry(sc) {
-  const lonSpan = sc.W * sc.dlon, latSpan = sc.H * sc.dlat;
-  const lon0 = sc.lon0 - sc.dlon / 2, lat0 = sc.lat0 - sc.dlat / 2;
-  const latc = lat0 + latSpan / 2, lonc = lon0 + lonSpan / 2, cosc = Math.cos((latc * Math.PI) / 180);
-  return {
-    lon0, lat0, lonSpan, latSpan, latc, lonc, cosc,
-    Dw: lonSpan * cosc, Dh: latSpan,
-    mPerUv: [111320 * lonSpan, 110574 * latSpan],
-    mCell: [111320 * sc.dlon, 110574 * sc.dlat],
-    focus: [(sc.focus[0] - lonc) * cosc, sc.focus[1] - latc],
-  };
-}
-function baseScale() { return Math.max(S.W / S.geo.Dw, S.H / S.geo.Dh); }
-function clampView() {
-  const v = S.view, g = S.geo;
-  v.z = Math.min(Math.max(v.z, 1), 6);
-  v.s = baseScale() * v.z;
-  const hx = S.W / (2 * v.s), hy = S.H / (2 * v.s);
-  v.cx = hx >= g.Dw / 2 ? 0 : Math.min(Math.max(v.cx, -g.Dw / 2 + hx), g.Dw / 2 - hx);
-  v.cy = hy >= g.Dh / 2 ? 0 : Math.min(Math.max(v.cy, -g.Dh / 2 + hy), g.Dh / 2 - hy);
-}
-function resetView() {
-  S.view.z = 1;
-  [S.view.cx, S.view.cy] = S.geo.focus;
-  clampView();
-  S.last = { cx: S.view.cx, cy: S.view.cy, s: S.view.s };
-}
-function visibleUV() {
-  if (!S.geo) return [0, 0, 1, 1];
-  const v = S.view, g = S.geo, hx = S.W / (2 * v.s), hy = S.H / (2 * v.s);
-  const c = (x) => Math.min(Math.max(x, 0), 1);
-  return [c((v.cx - hx) / g.Dw + 0.5), c((v.cy - hy) / g.Dh + 0.5), c((v.cx + hx) / g.Dw + 0.5), c((v.cy + hy) / g.Dh + 0.5)];
-}
-// device px (origin bottom-left, y up) -> domain uv
-function pxToUV(x, y) {
-  const v = S.view, g = S.geo;
-  return [(v.cx + (x - S.W / 2) / v.s) / g.Dw + 0.5, (v.cy + (y - S.H / 2) / v.s) / g.Dh + 0.5];
-}
-
-function particleCount() {
-  const css = (S.W * S.H) / (S.dpr * S.dpr);
-  return Math.round(Math.min(Math.max(css / 7, 16000), 200000));
-}
-
-function resize() {
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  let dpr = Math.min(window.devicePixelRatio || 1, 2);
-  if (w * h * dpr * dpr > 5.2e6) dpr = Math.sqrt(5.2e6 / (w * h));
-  S.dpr = dpr;
-  S.W = canvas.width = Math.max(1, Math.round(w * dpr));
-  S.H = canvas.height = Math.max(1, Math.round(h * dpr));
-  makeTrails(S.W, S.H);
-  if (S.geo) {
-    clampView();
-    S.last = { cx: S.view.cx, cy: S.view.cy, s: S.view.s };
-    makeParticles(particleCount());
-    renderStats();
-  }
-}
-
-// ---------------------------------------------------------------- data
-async function fetchBytes(url, expected, onProgress) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  let bytes;
-  if (res.body && res.body.getReader) {
-    const reader = res.body.getReader(), chunks = [];
-    let got = 0;
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value);
-      got += value.length;
-      onProgress(Math.min(got / expected, 1));
-    }
-    bytes = new Uint8Array(got);
-    let o = 0;
-    for (const c of chunks) { bytes.set(c, o); o += c.length; }
-  } else {
-    bytes = new Uint8Array(await res.arrayBuffer());
-  }
-  if (url.endsWith(".txt")) {                 // base64 text, see tools/undertow/fetch_data.py
-    const s = atob(new TextDecoder().decode(bytes).trim());
-    bytes = new Uint8Array(s.length);
-    for (let i = 0; i < s.length; i++) bytes[i] = s.charCodeAt(i);
-  }
-  if (bytes[0] === 0x1f && bytes[1] === 0x8b) {
-    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
-    bytes = new Uint8Array(await new Response(stream).arrayBuffer());
-  }
-  return bytes;
-}
-
-// Undo the packing in tools/undertow/fetch_data.py (base64 and gzip are already undone): per day u, v (int8, square-root curve) and
-// temperature (uint8), then one land/sea mask.
-function decode(sc, bytes) {
-  const n = sc.W * sc.H, N = sc.dates.length;
-  if (bytes.length !== N * 3 * n + n) throw new Error("unexpected data size");
-  const deq = new Float32Array(256);
-  for (let b = 0; b < 256; b++) { const q = b < 128 ? b : b - 256; deq[b] = Math.sign(q) * (q / 127) ** 2 * sc.vmax; }
-  const out = new Float32Array(n * N * 4), mask = bytes.subarray(N * 3 * n);
-  for (let k = 0; k < N; k++) {
-    const base = k * 3 * n;
-    for (let j = 0; j < n; j++) {
-      const o = (k * n + j) * 4;
-      out[o] = deq[bytes[base + j]];
-      out[o + 1] = deq[bytes[base + n + j]];
-      out[o + 2] = bytes[base + 2 * n + j] / 255;
-      out[o + 3] = mask[j] / 255;
-    }
-  }
-  return out;
-}
-
-function upload(sc, data) {
-  gl.bindTexture(gl.TEXTURE_2D_ARRAY, fieldTex);
-  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-  gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA16F, sc.W, sc.H, sc.dates.length, 0, gl.RGBA, gl.FLOAT, data);
-  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-}
-
-let loadToken = 0;
-async function selectScene(i) {
-  const token = ++loadToken;
-  const sc = S.manifest.scenes[i];
-  S.sceneIdx = i;
-  [...ui.scenes.children].forEach((b, k) => b.setAttribute("aria-pressed", String(k === i)));
-  let data = S.cache.get(sc.id);
-  if (!data) {
-    ui.loading.classList.remove("is-done", "is-error");
-    ui.loadingBar.parentElement.hidden = false;
-    ui.loadingText.textContent = `Downloading ${sc.name} · ${(sc.bytes / 1e6).toFixed(1)} MB`;
-    ui.loadingBar.style.width = "0%";
-    try {
-      const bytes = await fetchBytes(sc.file, sc.bytes, (f) => { ui.loadingBar.style.width = `${(f * 100).toFixed(1)}%`; });
-      data = decode(sc, bytes);
-    } catch (e) {
-      console.error(e);
-      if (token === loadToken) fail(`Couldn't load the ${sc.name} data (${e.message}). Reload the page to try again.`);
-      return;
-    }
-    S.cache.set(sc.id, data);
-  }
-  if (token !== loadToken) return;
-  S.sc = sc;
-  S.data = data;
-  S.geo = geometry(sc);
-  upload(sc, data);
-  S.t = Math.min(S.t, sc.dates.length - 1);
-  if (!S.ready) S.t = sc.dates.length - 1 - (S.playing ? 20 : 0);
-  resetView();
-  clearTrails();
-  makeParticles(particleCount());
-  buildTimeline();
-  renderScene();
-  renderLegend();
-  renderStats();
-  ui.loading.classList.add("is-done");
-  S.ready = true;
-}
-
-// ---------------------------------------------------------------- UI text
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-function fmtDate(iso, long) {
-  const [y, m, d] = iso.split("-").map(Number);
-  return long ? `${d} ${MONTHS[m - 1]} ${y}` : `${d} ${MONTHS[m - 1]}`;
-}
-const fmtN = (x) => x.toLocaleString("en-GB");
-function sig2(x) { const p = 10 ** (Math.floor(Math.log10(x)) - 1); return Math.round(x / p) * p; }
-
-function renderScene() {
-  const sc = S.sc;
-  ui.sceneName.textContent = sc.name;
-  ui.sceneWhere.textContent = sc.where;
-  ui.sceneBlurb.textContent = sc.blurb;
-  const d = sc.dates;
-  $("#aDays").textContent = `${d.length} days`;
-  const gaps = [];
-  for (let k = 1; k < d.length; k++) {
-    for (let t = Date.parse(d[k - 1]) + 864e5; t < Date.parse(d[k]); t += 864e5) gaps.push(fmtDate(new Date(t).toISOString().slice(0, 10), false));
-  }
-  $("#aRange").textContent = `${fmtDate(d[0], true)} to ${fmtDate(d[d.length - 1], true)}, one day per second by default`
-    + (gaps.length ? ` (NOAA's record skips ${gaps.join(", ")})` : "");
-  $("#aSceneTitle").textContent = sc.name;
-  $("#aBlurb").textContent = sc.blurb;
-}
-
-function renderStats() {
-  if (!S.sc) return;
-  const sc = S.sc, st = sc.stats;
-  // ocean seconds per real second: vmax covers pxPerSec CSS px each second
-  S.lapse = ((S.pxPerSec * S.dpr) / S.view.s) * 110574 / sc.vmax;
-  const rows = [
-    ["Top speed", `${st.topSpeed.toFixed(2)} m/s · ${(st.topSpeed * 1.944).toFixed(1)} kn`],
-    ["Mean speed", `${st.meanSpeed.toFixed(2)} m/s`],
-    ["Water", `${sc.tmin.toFixed(0)} to ${sc.tmax.toFixed(0)} °C`],
-    ["Tracers", fmtN(parts ? parts.N : 0)],
-    ["Time-lapse", `×${fmtN(sig2(S.lapse))}`],
-  ];
-  const html = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
-  ui.stats.innerHTML = html;
-  $("#aStats").innerHTML = html + `<dt>Grid</dt><dd>${sc.W} × ${sc.H} cells · 0.25°</dd>`;
-  $("#aLapse").textContent = `${fmtN(sig2(S.lapse))} times`;
-}
-
-function renderLegend() {
-  const c = ui.legendBar, ctx = c.getContext("2d"), w = c.width;
-  const pal = ramp(PALETTES[S.mode], w);
-  const img = ctx.createImageData(w, 1);
-  img.data.set(pal);
-  for (let y = 0; y < c.height; y++) ctx.putImageData(img, 0, y);
-  ui.legendTitle.textContent = LEGEND_TITLES[S.mode];
-  const sc = S.sc;
-  let ticks = [];
-  if (S.mode === 0) {
-    for (let t = Math.ceil(sc.tmin / 5) * 5; t <= sc.tmax; t += 5) ticks.push([(t - sc.tmin) / (sc.tmax - sc.tmin), `${t}°`]);
-  } else if (S.mode === 1) {
-    for (let v = 0; v <= sc.vmax + 1e-6; v += 0.5) ticks.push([Math.sqrt(v / sc.vmax), v.toFixed(1)]);
-  } else {
-    ticks = [[0, "Cyclonic"], [0.5, "Calm"], [1, "Anticyclonic"]];
-  }
-  ui.legendTicks.innerHTML = ticks.map(([x, label]) => {
-    const cls = x < 0.06 ? "l" : x > 0.94 ? "r" : "";
-    return `<span class="${cls}" style="left:${(x * 100).toFixed(2)}%">${label}</span>`;
-  }).join("");
-}
-
-function buildTimeline() {
-  const d = S.sc.dates, N = d.length;
-  ui.scrubber.max = String(N - 1);
-  let rail = "", months = "";
-  // A month starts at the first date whose month differs from the previous one
-  // (NOAA's record can skip a day, so the 1st itself may be missing).
-  const starts = d.map((iso, k) => k > 0 && iso.slice(5, 7) !== d[k - 1].slice(5, 7));
-  d.forEach((iso, k) => {
-    const x = ((k / (N - 1)) * 100).toFixed(3);
-    rail += `<i class="${starts[k] ? "m" : ""}" style="left:${x}%"></i>`;
-    const lead = k === 0 && !starts.slice(1, 6).includes(true);
-    if (starts[k] || lead) months += `<span style="left:${x}%">${MONTHS[Number(iso.slice(5, 7)) - 1]}</span>`;
-  });
-  ui.rail.innerHTML = rail;
-  ui.months.innerHTML = months;
-}
-
-let lastDay = -1;
-function renderTime() {
-  const d = S.sc.dates, N = d.length;
-  const x = (S.t / (N - 1)) * 100;
-  ui.fill.style.width = `${x}%`;
-  ui.knob.style.left = `${x}%`;
-  if (document.activeElement !== ui.scrubber) ui.scrubber.value = String(S.t);
-  const day = Math.min(Math.round(S.t), N - 1);
-  if (day !== lastDay) {
-    lastDay = day;
-    ui.date.textContent = fmtDate(d[day], true);
-    ui.dayOf.textContent = `Day ${day + 1} of ${N}`;
-    ui.scrubber.setAttribute("aria-valuetext", fmtDate(d[day], true));
-  }
-}
-
-// ---------------------------------------------------------------- probe
-const COMPASS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-function sampleCPU(uvx, uvy) {
-  const sc = S.sc, W = sc.W, H = sc.H, n = W * H, N = sc.dates.length;
-  const x = Math.min(Math.max(uvx * W - 0.5, 0), W - 1.001), y = Math.min(Math.max(uvy * H - 0.5, 0), H - 1.001);
-  const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j;
-  const d0 = Math.floor(S.t), d1 = Math.min(d0 + 1, N - 1), fm = S.t - d0;
-  const out = [0, 0, 0, 0];
-  for (const [k, wk] of [[d0, 1 - fm], [d1, fm]]) {
-    for (const [ii, jj, w] of [[i, j, (1 - fx) * (1 - fy)], [i + 1, j, fx * (1 - fy)], [i, j + 1, (1 - fx) * fy], [i + 1, j + 1, fx * fy]]) {
-      const o = (k * n + jj * W + ii) * 4;
-      for (let c = 0; c < 4; c++) out[c] += S.data[o + c] * w * wk;
-    }
-  }
-  return out;
-}
-let probeTimer = 0;
-function showProbe(clientX, clientY, tap) {
-  if (!S.ready) return;
-  const r = canvas.getBoundingClientRect();
-  const [ux, uy] = pxToUV((clientX - r.left) * S.dpr, (r.height - (clientY - r.top)) * S.dpr);
-  if (ux < 0 || ux > 1 || uy < 0 || uy > 1) { ui.probe.hidden = true; return; }
-  const g = S.geo, lon = g.lon0 + ux * g.lonSpan, lat = g.lat0 + uy * g.latSpan;
-  const f = sampleCPU(ux, uy);
-  const ll = `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? "N" : "S"} ${Math.abs(lon).toFixed(2)}°${lon >= 0 ? "E" : "W"}`;
-  let body;
-  if (f[3] < 0.5) body = `<span>Land</span>`;
-  else {
-    const sp = Math.hypot(f[0], f[1]);
-    const dir = COMPASS[Math.round(((Math.atan2(f[0], f[1]) * 180) / Math.PI + 360) % 360 / 45) % 8];
-    const temp = S.sc.tmin + f[2] * (S.sc.tmax - S.sc.tmin);
-    body = `<b>${temp.toFixed(1)} °C</b> <span>·</span> <b>${sp.toFixed(2)} m/s</b> <span>toward ${dir}</span>`;
-  }
-  ui.probe.innerHTML = `<span>${ll}</span><br>${body}`;
-  ui.probe.hidden = false;
-  const pw = ui.probe.offsetWidth, ph = ui.probe.offsetHeight;
-  const px = clientX + 16 + pw > innerWidth ? clientX - 16 - pw : clientX + 16;
-  const py = clientY + 16 + ph > innerHeight ? clientY - 16 - ph : clientY + 16;
-  ui.probe.style.transform = `translate(${px}px, ${py}px)`;
-  ui.probe.classList.toggle("is-tap", !!tap);
-  clearTimeout(probeTimer);
-  if (tap) probeTimer = setTimeout(() => { ui.probe.hidden = true; }, 2600);
-}
-
-// ---------------------------------------------------------------- frame
-let prevNow = 0, frameNo = 0;
-function frame(now) {
-  requestAnimationFrame(frame);
-  const dt = Math.min((now - (prevNow || now)) / 1000, 1 / 20);
-  prevNow = now;
-  if (!S.ready || !parts) return;
-  const sc = S.sc, N = sc.dates.length, g = S.geo, v = S.view;
-
-  if (S.playing) { S.t += dt * S.rate; if (S.t > N - 1) S.t = 0; }
-  const d0 = Math.floor(S.t), d1 = Math.min(d0 + 1, N - 1), mix = S.t - d0;
-  const lapse = ((S.pxPerSec * S.dpr) / v.s) * 110574 / sc.vmax;
-  S.seed = (S.seed + 0.6180339) % 97;
-  const view = visibleUV();
-
-  const common = (u) => {
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D_ARRAY, fieldTex);
-    gl.uniform1i(u.u_field, 0);
-    gl.uniform1f(u.u_day0, d0);
-    gl.uniform1f(u.u_day1, d1);
-    gl.uniform1f(u.u_mix, mix);
-  };
-
-  // 1. move tracers (transform feedback: buffer cur -> buffer 1-cur)
-  gl.useProgram(P.update.p);
-  common(P.update.u);
-  let u = P.update.u;
-  gl.uniform2f(u.u_mPerUv, g.mPerUv[0], g.mPerUv[1]);
-  gl.uniform1f(u.u_lat0, g.lat0);
-  gl.uniform1f(u.u_latSpan, g.latSpan);
-  gl.uniform1f(u.u_step, lapse * dt);
-  gl.uniform1f(u.u_dt, dt);
-  gl.uniform1f(u.u_life, S.life);
-  gl.uniform1f(u.u_seed, S.seed);
-  gl.uniform4f(u.u_view, view[0], view[1], view[2], view[3]);
-  gl.bindVertexArray(parts.updVAO[cur]);
-  gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, parts.tf[1 - cur]);
-  gl.enable(gl.RASTERIZER_DISCARD);
-  gl.beginTransformFeedback(gl.POINTS);
-  gl.drawArrays(gl.POINTS, 0, parts.N);
-  gl.endTransformFeedback();
-  gl.disable(gl.RASTERIZER_DISCARD);
-  gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
-
-  // 2. fade last frame's trails into the other buffer, re-projected to the current view
-  gl.viewport(0, 0, S.W, S.H);
-  gl.bindFramebuffer(gl.FRAMEBUFFER, trails[1 - tcur].fbo);
-  gl.bindVertexArray(emptyVAO);
-  gl.useProgram(P.fade.p);
-  u = P.fade.u;
-  gl.activeTexture(gl.TEXTURE1);
-  gl.bindTexture(gl.TEXTURE_2D, trails[tcur].tex);
-  gl.uniform1i(u.u_prev, 1);
-  gl.uniform2f(u.u_res, S.W, S.H);
-  gl.uniform2f(u.u_c0, S.last.cx, S.last.cy);
-  gl.uniform2f(u.u_c1, v.cx, v.cy);
-  gl.uniform1f(u.u_s0, S.last.s);
-  gl.uniform1f(u.u_s1, v.s);
-  gl.uniform1f(u.u_fade, Math.pow(TRAILS[S.trail][1], dt * 60));
-  gl.uniform1i(u.u_q8, floatTrails ? 0 : 1);
-  gl.drawArrays(gl.TRIANGLES, 0, 3);
-  S.last = { cx: v.cx, cy: v.cy, s: v.s };
-
-  // 3. draw each tracer's step as a line segment, added on top
-  gl.enable(gl.BLEND);
-  gl.blendFunc(gl.ONE, gl.ONE);
-  gl.useProgram(P.draw.p);
-  common(P.draw.u);
-  u = P.draw.u;
-  gl.activeTexture(gl.TEXTURE2);
-  gl.bindTexture(gl.TEXTURE_2D, palTex);
-  gl.uniform1i(u.u_pal, 2);
-  gl.uniform2f(u.u_D, g.Dw, g.Dh);
-  gl.uniform2f(u.u_c, v.cx, v.cy);
-  gl.uniform2f(u.u_res, S.W, S.H);
-  gl.uniform2f(u.u_cell, 1 / sc.W, 1 / sc.H);
-  gl.uniform2f(u.u_mCell, g.mCell[0], g.mCell[1]);
-  gl.uniform1f(u.u_s, v.s);
-  gl.uniform1f(u.u_life, S.life);
-  gl.uniform1f(u.u_vmax, sc.vmax);
-  gl.uniform1f(u.u_gain, S.gain * Math.pow(S.dpr, 0.6) * Math.sqrt(dt * 60));
-  gl.uniform1f(u.u_lat0, g.lat0);
-  gl.uniform1f(u.u_latSpan, g.latSpan);
-  gl.uniform1i(u.u_mode, S.mode);
-  gl.bindVertexArray(parts.drawVAO[cur]);
-  gl.drawArraysInstanced(gl.LINES, 0, 2, parts.N);
-  gl.disable(gl.BLEND);
-
-  // 4. compose sea, land, graticule and trails to the screen
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  gl.bindVertexArray(emptyVAO);
-  gl.useProgram(P.compose.p);
-  common(P.compose.u);
-  u = P.compose.u;
-  gl.activeTexture(gl.TEXTURE1);
-  gl.bindTexture(gl.TEXTURE_2D, trails[1 - tcur].tex);
-  gl.uniform1i(u.u_trail, 1);
-  gl.activeTexture(gl.TEXTURE2);
-  gl.bindTexture(gl.TEXTURE_2D, palTex);
-  gl.uniform1i(u.u_pal, 2);
-  gl.uniform2f(u.u_res, S.W, S.H);
-  gl.uniform2f(u.u_D, g.Dw, g.Dh);
-  gl.uniform2f(u.u_c, v.cx, v.cy);
-  gl.uniform2f(u.u_tex, sc.W, sc.H);
-  gl.uniform2f(u.u_cell, 1 / sc.W, 1 / sc.H);
-  gl.uniform2f(u.u_mCell, g.mCell[0], g.mCell[1]);
-  gl.uniform1f(u.u_s, v.s);
-  gl.uniform1f(u.u_dpr, S.dpr);
-  gl.uniform1f(u.u_exposure, S.exposure);
-  gl.uniform1f(u.u_time, now / 1000);
-  gl.uniform1f(u.u_vmax, sc.vmax);
-  gl.uniform1f(u.u_lat0, g.lat0);
-  gl.uniform1f(u.u_latSpan, g.latSpan);
-  gl.uniform1f(u.u_lonc, g.lonc);
-  gl.uniform1f(u.u_latc, g.latc);
-  gl.uniform1f(u.u_cosc, g.cosc);
-  gl.uniform1i(u.u_mode, S.mode);
-  gl.drawArrays(gl.TRIANGLES, 0, 3);
-
-  cur = 1 - cur;
-  tcur = 1 - tcur;
-  if ((frameNo++ & 7) === 0) renderTime();
-}
-
-// ---------------------------------------------------------------- controls
-function setPlaying(on) {
-  S.playing = on;
-  ui.play.setAttribute("aria-label", on ? "Pause" : "Play");
-  ui.playIcon.innerHTML = on
-    ? '<rect x="2" y="1" width="3" height="10"/><rect x="7" y="1" width="3" height="10"/>'
-    : '<path d="M2.5 1 L11 6 L2.5 11 Z"/>';
-}
-function setMode(m) {
-  S.mode = m;
-  [...ui.modes.children].forEach((b, k) => b.setAttribute("aria-pressed", String(k === m)));
-  if (S.sc) renderLegend();
-}
-function setUI(on) {
-  ui.hud.classList.toggle("is-off", !on);
-  if (!on) { ui.probe.hidden = true; closeAbout(); ui.reveal.focus({ preventScroll: true }); }
-  else ui.hideBtn.focus({ preventScroll: true });
-}
-function openAbout() { ui.about.hidden = false; ui.aboutBtn.setAttribute("aria-expanded", "true"); ui.aboutClose.focus({ preventScroll: true }); }
-function closeAbout() { if (ui.about.hidden) return; ui.about.hidden = true; ui.aboutBtn.setAttribute("aria-expanded", "false"); }
-function step(days) { setPlaying(false); S.t = Math.min(Math.max(Math.round(S.t) + days, 0), S.sc.dates.length - 1); renderTime(); }
-
-ui.play.addEventListener("click", () => setPlaying(!S.playing));
-ui.rate.addEventListener("click", () => {
-  S.rate = RATES[(RATES.indexOf(S.rate) + 1) % RATES.length];
-  ui.rate.textContent = `${S.rate} day${S.rate === 1 ? "" : "s"}/s`;
-});
-ui.trail.addEventListener("click", () => { S.trail = (S.trail + 1) % TRAILS.length; ui.trail.textContent = `Trail: ${TRAILS[S.trail][0]}`; });
-ui.modes.addEventListener("click", (e) => { const b = e.target.closest("[data-mode]"); if (b) setMode(Number(b.dataset.mode)); });
-ui.scrubber.addEventListener("input", () => { S.t = Number(ui.scrubber.value); renderTime(); });
-ui.aboutBtn.addEventListener("click", () => (ui.about.hidden ? openAbout() : closeAbout()));
-ui.aboutClose.addEventListener("click", () => { closeAbout(); ui.aboutBtn.focus({ preventScroll: true }); });
-ui.hideBtn.addEventListener("click", () => setUI(false));
-ui.reveal.addEventListener("click", () => setUI(true));
-
-addEventListener("keydown", (e) => {
-  if (e.target.closest && e.target.closest("input, textarea")) {
-    if (e.key === "Escape") e.target.blur();
-    return;
-  }
-  if (e.metaKey || e.ctrlKey || e.altKey) return;
-  const k = e.key.toLowerCase();
-  if (k === " " && !(e.target instanceof HTMLButtonElement)) { e.preventDefault(); setPlaying(!S.playing); }
-  else if (k === "arrowright") step(1);
-  else if (k === "arrowleft") step(-1);
-  else if (k === "h") setUI(ui.hud.classList.contains("is-off"));
-  else if (k === "escape") closeAbout();
-  else if (/^[1-4]$/.test(k) && S.manifest) selectScene(Number(k) - 1);
-});
-
-// pan, zoom, pinch
-const pointers = new Map();
-let pinch = null, dragged = false;
-function zoomAt(clientX, clientY, factor) {
-  const r = canvas.getBoundingClientRect(), v = S.view;
-  const px = ((clientX - r.left) * S.dpr - S.W / 2), py = ((r.height - (clientY - r.top)) * S.dpr - S.H / 2);
-  const mx = v.cx + px / v.s, my = v.cy + py / v.s;
-  v.z *= factor;
-  clampView();
-  v.cx = mx - px / v.s;
-  v.cy = my - py / v.s;
-  clampView();
-  renderStats();
-}
-canvas.addEventListener("pointerdown", (e) => {
-  canvas.setPointerCapture(e.pointerId);
-  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  dragged = false;
-  if (pointers.size === 2) {
-    const [a, b] = [...pointers.values()];
-    pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) };
-  }
-});
-canvas.addEventListener("pointermove", (e) => {
-  const p = pointers.get(e.pointerId);
-  if (!p) { if (e.pointerType === "mouse") showProbe(e.clientX, e.clientY, false); return; }
-  const dx = e.clientX - p.x, dy = e.clientY - p.y;
-  p.x = e.clientX; p.y = e.clientY;
-  if (pointers.size === 2 && pinch) {
-    const [a, b] = [...pointers.values()];
-    const d = Math.hypot(a.x - b.x, a.y - b.y);
-    zoomAt((a.x + b.x) / 2, (a.y + b.y) / 2, d / pinch.d);
-    pinch.d = d;
-    dragged = true;
-    return;
-  }
-  if (Math.abs(dx) + Math.abs(dy) > 0) {
-    if (!dragged && Math.abs(dx) + Math.abs(dy) < 2) return;
-    dragged = true;
-    canvas.classList.add("is-grab");
-    S.view.cx -= (dx * S.dpr) / S.view.s;
-    S.view.cy += (dy * S.dpr) / S.view.s;
-    clampView();
-    ui.probe.hidden = true;
-  }
-});
-function endPointer(e) {
-  const wasTap = pointers.has(e.pointerId) && !dragged && pointers.size === 1;
-  pointers.delete(e.pointerId);
-  if (pointers.size < 2) pinch = null;
-  if (pointers.size === 0) canvas.classList.remove("is-grab");
-  if (wasTap && e.type === "pointerup" && e.pointerType !== "mouse") showProbe(e.clientX, e.clientY, true);
-}
-canvas.addEventListener("pointerup", endPointer);
-canvas.addEventListener("pointercancel", endPointer);
-canvas.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") ui.probe.hidden = true; });
-canvas.addEventListener("wheel", (e) => { e.preventDefault(); zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
-canvas.addEventListener("dblclick", () => { resetView(); renderStats(); });
-
-let resizeTimer = 0;
-addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(resize, 120); });
-
-// ---------------------------------------------------------------- boot
-async function boot() {
-  setPlaying(S.playing);
-  resize();
-  let manifest;
-  try {
-    const res = await fetch("data/scenes.json");
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    manifest = await res.json();
-  } catch (e) {
-    console.error(e);
-    fail(`Couldn't load the list of regions (${e.message}). Reload the page to try again.`);
-    return;
-  }
-  S.manifest = manifest;
-  ui.scenes.innerHTML = manifest.scenes.map((sc, i) =>
-    `<button class="chip" id="scene-${sc.id}" data-scene="${i}" aria-pressed="false" title="${sc.name} (${i + 1})">${sc.name.split(/[ –]/)[0]}</button>`).join("");
-  ui.scenes.addEventListener("click", (e) => { const b = e.target.closest("[data-scene]"); if (b) selectScene(Number(b.dataset.scene)); });
-  $("#aSources").innerHTML = manifest.sources.map((s) => `<li><a href="${s.url}" target="_blank" rel="noopener">${s.name}</a></li>`).join("")
-    + `<li>Downloaded ${fmtDate(manifest.generated, true)} from NOAA CoastWatch ERDDAP.</li>`;
-  await selectScene(0);
-  requestAnimationFrame(frame);
-}
-boot();
-})();
-</script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>

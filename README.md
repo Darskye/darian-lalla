@@ -21,13 +21,27 @@ All copy lives in `src/content.js`. Pushing to `main` deploys to GitHub Pages (`
 
 URL params for screenshots: `?t=16` (animation clock), `?y=2400` (scroll), `?img=text`, `?mood=light`.
 
-## Lab: Undertow on real data
+## Lab: Undertow, a data exhibit
 
-`public/lab/undertow/` is a standalone WebGL piece (served at `/lab/undertow/`) that draws real ocean currents measured by satellite altimetry, coloured by NOAA sea-surface temperature, for four regions over the last 59 days. Refresh the data with:
+`public/lab/undertow/` (served at `/lab/undertow/`) is a standalone, museum-style WebGL exhibit in three rooms:
+
+- **Ocean**: 59 days of satellite-altimetry surface currents and NOAA OISST temperature for four western boundary currents, with automatically detected and tracked eddies, marine heatwaves against the 1991–2020 normal, and a 45-year warming record.
+- **Forecast**: a Fourier neural operator trained on 2019–2024 satellite current maps, validated on 2025 and graded on 2026, shown side by side with what happened.
+- **Wind**: NOAA GFS surface wind, jet stream, air temperature, rain and pressure on a globe, 72 hours ahead.
+
+The page is plain ES modules (`js/`), no build step. Data comes from free public NOAA services; the tools in `tools/undertow/` rebuild everything:
 
 ```bash
-pip install numpy scipy netCDF4
-python tools/undertow/fetch_data.py --days 60 --end 2026-09-28
+pip install numpy scipy netCDF4 pygrib torch
+python tools/undertow/fetch_data.py --days 60 --end 2026-09-28   # display window (ocean)
+python tools/undertow/fetch_history.py --end 2026-09-28          # long records (cached, not committed)
+python tools/undertow/fetch_data.py --days 60 --end 2026-09-28   # again, now with the anomaly layer
+python tools/undertow/analyze.py                                 # eddies, heatwaves, trends
+python tools/undertow/train_fno.py train --minutes 60            # CPU is enough
+python tools/undertow/train_fno.py eval && python tools/undertow/train_fno.py export
+python tools/undertow/fetch_wind.py                               # latest GFS run
 ```
+
+The trained weights are kept in `tools/undertow/model/fno.pt`.
 
 Fonts: Geist and Geist Mono (OFL), and a static wide instance of Anybody (OFL, see `src/fonts/OFL-Anybody.txt`).
