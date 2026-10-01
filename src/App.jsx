@@ -3,6 +3,7 @@ import { START_Y } from "./lib/debug.js";
 import { fontsReady } from "./lib/glyphs.js";
 import AsciiHero from "./components/AsciiHero.jsx";
 import Viewfinder from "./components/Viewfinder.jsx";
+import AboutSignal from "./components/AboutSignal.jsx";
 import AsciiPlate from "./components/AsciiPlate.jsx";
 import Clock from "./components/Clock.jsx";
 import Nav from "./components/Nav.jsx";
@@ -13,11 +14,9 @@ import SkillSpace from "./components/SkillSpace.jsx";
 import { Fade, Words } from "./components/Reveal.jsx";
 import { wordmark } from "./sketches/index.js";
 import {
-  ABOUT,
   CAPABILITIES,
   CLUSTERS,
   CONTACT,
-  FACTS,
   LAB,
   NOTES,
   ORIGIN,
@@ -160,25 +159,7 @@ export default function App() {
 
         <section id="about" className="block">
           <SectionHead title="About" count="" note="No photo. Just signal." />
-          <div className="about">
-            <div className="about-text">
-              {ABOUT.map((p) => (
-                <Words key={p.slice(0, 12)} text={p} className="mid" />
-              ))}
-            </div>
-            <Fade as="dl" className="facts">
-              {FACTS.map(([k, v]) => (
-                <div key={k}>
-                  <dt className="muted">{k}</dt>
-                  <dd>{v}</dd>
-                </div>
-              ))}
-            </Fade>
-          </div>
-          <Fade as="blockquote" className="quote">
-            “Without data, you&apos;re just another person with an opinion.”
-            <cite>— W. Edwards Deming</cite>
-          </Fade>
+          <AboutSignal />
         </section>
 
         <section id="contact" className="contact">
