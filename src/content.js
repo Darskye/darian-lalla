@@ -135,6 +135,7 @@ export const CONCEPTS = [
       ["Output", "6-hourly heat-transport forecasts"],
     ],
     sketch: undertow,
+    link: ["Explore the real-data exhibit", "lab/undertow/"],
     alt: "Thousands of particles tracing warm and cold ocean currents through gyres and a boundary current",
   },
   {
