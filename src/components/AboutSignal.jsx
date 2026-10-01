@@ -5,7 +5,6 @@ import { useInView } from "./Reveal.jsx";
 import { CHAPTERS, FACTS } from "../content.js";
 
 const NAME = "DARIAN LALLA";
-const HEX = [...NAME].map((c) => c.charCodeAt(0).toString(16).toUpperCase()).join(" ");
 const STYLES = ["Encoded", ...CHAPTERS.map((c) => c.style)];
 
 /**
@@ -240,13 +239,6 @@ export default function AboutSignal() {
           <span>Signal</span>
           <span className="muted">↳ encoded</span>
         </div>
-        <p className="signal-lede">
-          This is where a photo would go. Instead, a single line: my path from where I started to where I&apos;m going,
-          drawn as you scroll.
-        </p>
-        <div className="signal-hex muted">
-          {NAME} → {HEX}
-        </div>
       </div>
 
       {CHAPTERS.map((ch, i) => (
@@ -274,7 +266,6 @@ export default function AboutSignal() {
             ))}
           </dl>
           <Barcode text={NAME} />
-          <div className="specimen-foot muted">{HEX}</div>
         </div>
       </div>
 

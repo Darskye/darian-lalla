@@ -4,6 +4,7 @@ import { fontsReady } from "./lib/glyphs.js";
 import AsciiHero from "./components/AsciiHero.jsx";
 import Viewfinder from "./components/Viewfinder.jsx";
 import AboutSignal from "./components/AboutSignal.jsx";
+import Desktop from "./components/Desktop.jsx";
 import AsciiPlate from "./components/AsciiPlate.jsx";
 import Clock from "./components/Clock.jsx";
 import Nav from "./components/Nav.jsx";
@@ -17,10 +18,7 @@ import {
   CAPABILITIES,
   CLUSTERS,
   CONTACT,
-  LAB,
-  NOTES,
   ORIGIN,
-  PAPER,
   STATEMENT,
 } from "./content.js";
 
@@ -101,60 +99,9 @@ export default function App() {
           </div>
         </section>
 
-        <section id="lab" className="block">
-          <SectionHead
-            title="Lab"
-            count={`(${String(LAB.length).padStart(2, "0")})`}
-            note="Experiments at the edge of data, code and play"
-          />
-          <div className="lab">
-            {LAB.map((l) => {
-              const Row = l.link ? "a" : "div";
-              const linkProps = l.link ? { href: l.link[1], ...ext } : { "data-scramble-host": "" };
-              return (
-                <Row key={l.code} className="lab-row" {...linkProps}>
-                  <span className="lab-title">
-                    <span className="muted">{l.code}</span>
-                    <Scramble text={l.title} />
-                  </span>
-                  <span className="lab-body">{l.body}</span>
-                  <span className="lab-meta">
-                    <span className="muted">{l.tags}</span>
-                    <span className={l.link ? "" : "muted"}>{l.link ? `${l.link[0]} ↗` : "Private"}</span>
-                  </span>
-                </Row>
-              );
-            })}
-          </div>
-        </section>
-
         <section id="papers" className="block">
-          <SectionHead title="Papers & notes" count="(01 + 03)" note="Peer-reviewed work and writing in progress" />
-          <div className="papers">
-            <Fade className="paper">
-              <div className="muted">
-                {PAPER.code} · {PAPER.venue}
-              </div>
-              <p className="paper-title">{PAPER.title}</p>
-              <div className="muted">{PAPER.authors}</div>
-              <div className="pills">
-                {PAPER.links.map(([t, h]) => (
-                  <a key={h} className="pill" href={h} {...ext}>
-                    {t} ↗
-                  </a>
-                ))}
-              </div>
-            </Fade>
-            <Fade className="notes">
-              {NOTES.map((n, i) => (
-                <div key={n} className="note">
-                  <span className="muted">N0{i + 1}</span>
-                  <span className="note-title">{n}</span>
-                  <span className="muted">Soon</span>
-                </div>
-              ))}
-            </Fade>
-          </div>
+          <SectionHead title="Papers & notes" count="(01 + 03)" note="A workspace: drag the windows, orbit the model" />
+          <Desktop />
         </section>
 
         <section id="about" className="block">
@@ -190,7 +137,7 @@ export default function App() {
           </div>
           <div className="foot-links">
             <a href="#work">Work</a>
-            <a href="#lab">Lab</a>
+            <a href="#concepts">Concepts</a>
             <a href="#papers">Papers</a>
           </div>
           <div className="foot-links">

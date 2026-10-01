@@ -198,42 +198,12 @@ export const CONCEPTS = [
   },
 ];
 
-export const LAB = [
-  {
-    code: "L01",
-    title: "OSHA Inspection Pulse",
-    body: "Python pipeline that pulls the last 30 days of OSHA inspections and violations from the DOL API, decodes and geocodes them with pandas, and builds a standalone Plotly dashboard.",
-    tags: "Data engineering · Public data",
-  },
-  {
-    code: "L02",
-    title: "Crownfall Tactics",
-    body: "Tactics-RPG prototype built on an AI-generated pixel-art pipeline and a hand-rolled isometric canvas engine.",
-    tags: "Game · AI art pipeline",
-    link: ["Play", "https://merry-tribe-527.higgsfield.app/"],
-  },
-  {
-    code: "L03",
-    title: "The Drowned Courier",
-    body: "Narrative detective RPG: a 45-node branching dialogue graph, dice-driven skill checks and AI-painted scenes.",
-    tags: "Game · Narrative systems",
-    link: ["Play", "https://stellar-warbler-708.higgsfield.app/"],
-  },
-  {
-    code: "L04",
-    title: "Claude Buddy",
-    body: "ESP32-S3 desk-companion firmware that visualises an AI coding agent's live state and token usage on a 0.85″ round display.",
-    tags: "Embedded · IoT",
-    link: ["Source", "https://github.com/Darskye/claude-buddy"],
-  },
-  {
-    code: "L05",
-    title: "This site",
-    body: "A raymarched ASCII sculpture, a fluid-simulated name sign and nine generative data plates in a viewfinder index. No images, no templates; every pixel is computed.",
-    tags: "WebGL2 · Generative",
-    link: ["Source", "https://github.com/Darskye/darian-lalla"],
-  },
-];
+export const BUDDY = {
+  title: "Claude Buddy",
+  body: "Desk-companion firmware for a LilyGo T-QT Pro (ESP32-S3, 0.85″ 128×128 display) that shows an AI coding agent's live state and token usage.",
+  tags: "Embedded · IoT · C++",
+  link: ["Source", "https://github.com/Darskye/claude-buddy"],
+};
 
 export const CAPABILITIES = [
   ["Machine learning", "Predictive models, classification, NLP"],
@@ -241,7 +211,7 @@ export const CAPABILITIES = [
   ["Data engineering", "Pipelines, ETL, warehousing"],
   ["Analytics", "Statistics, dashboards, storytelling"],
   ["Creative technology", "WebGL, shaders, generative visuals"],
-  ["Interactive prototypes", "Apps, games, installations"],
+  ["Interactive prototypes", "Apps, tools, installations"],
   ["Environmental data", "Tier II, SDS/GHS, OSHA, IoT sensing"],
 ];
 
@@ -280,10 +250,30 @@ export const CLUSTERS = [
 
 export const PAPER = {
   code: "P01",
-  venue: "Chapter 3 · Cognitive Sensing Technologies and Applications · IET",
+  kind: "Peer-reviewed · Book chapter",
   title:
     "Performance evaluation of cognitive sensor frameworks for IoT applications in healthcare and environment monitoring",
-  authors: "Amitabh Mishra, Darian S. Lalla, John Compo",
+  authors: ["Amitabh Mishra", "Darian S. Lalla", "John Compo"],
+  meta: [
+    ["Book", "Cognitive Sensing Technologies and Applications"],
+    ["Publisher", "The Institution of Engineering and Technology (IET)"],
+    ["Chapter", "3"],
+    ["Pages", "73–97"],
+    ["Year", "2023"],
+    ["ISBN", "978-1-83953-689-2"],
+    ["DOI", "10.1049/PBCE135E_ch3"],
+  ],
+  bibtex: `@incollection{mishra2023cognitive,
+  title     = {Performance evaluation of cognitive sensor frameworks
+               for IoT applications in healthcare and environment monitoring},
+  author    = {Mishra, Amitabh and Lalla, Darian S. and Compo, John},
+  booktitle = {Cognitive Sensing Technologies and Applications},
+  publisher = {The Institution of Engineering and Technology},
+  chapter   = {3},
+  pages     = {73--97},
+  year      = {2023},
+  doi       = {10.1049/PBCE135E_ch3}
+}`,
   links: [
     ["DOI", "https://doi.org/10.1049/PBCE135E_ch3"],
     ["IET Digital Library", "https://digital-library.theiet.org/doi/10.1049/pbce135e_ch3"],
@@ -291,9 +281,9 @@ export const PAPER = {
 };
 
 export const NOTES = [
-  "Why environmental compliance is fundamentally a data problem",
-  "Automation as a climate tool for reporting workflows",
-  "From environmental specialist to data & AI: a non-traditional path",
+  { file: "compliance-is-a-data-problem.md", title: "Why environmental compliance is fundamentally a data problem" },
+  { file: "automation-as-a-climate-tool.md", title: "Automation as a climate tool for reporting workflows" },
+  { file: "a-non-traditional-path.md", title: "From environmental specialist to data & AI: a non-traditional path" },
 ];
 
 export const ABOUT = [
