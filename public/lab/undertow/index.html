@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Undertow</title>
+<meta name="description" content="A data exhibit: real ocean currents measured by satellite, a neural operator that forecasts them, and the global winds that drive them.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@150,800&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="undertow.css">
+</head>
+<body>
+<canvas id="sea" aria-label="Animated map of the selected data"></canvas>
+<div class="callouts" id="callouts"></div>
+<div class="split-labels" id="splitLabels" hidden><span class="l" data-obstacle>What happened</span><span class="r" data-obstacle>What the model predicted</span></div>
+<button class="split-handle" id="splitHandle" hidden data-obstacle aria-label="Drag to compare reality and forecast">
+  <svg viewBox="0 0 14 14" aria-hidden="true"><path d="M5 3 1 7l4 4M9 3l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+</button>
+
+<div class="hud" id="hud">
+  <header class="top" data-obstacle>
+    <button class="mark" id="markBtn" title="Back to the start"><span class="mark-code">[ C01 ]</span><span class="mark-name">Undertow</span></button>
+    <nav class="rooms glass" aria-label="Rooms">
+      <button class="room" id="room-ocean" data-room="ocean" aria-pressed="true"><span>01</span>Ocean</button>
+      <button class="room" id="room-forecast" data-room="forecast" aria-pressed="false"><span>02</span>Forecast</button>
+      <button class="room" id="room-wind" data-room="wind" aria-pressed="false"><span>03</span>Wind</button>
+    </nav>
+    <div class="top-actions">
+      <button class="tbtn insights-btn" id="insightsBtn" aria-controls="rightPanel" aria-expanded="false">Insights</button>
+      <button class="tbtn" id="tourBtn" aria-pressed="false" title="Let the exhibit guide itself">Tour</button>
+      <button class="tbtn" id="aboutBtn" aria-controls="about" aria-expanded="false">About</button>
+      <button class="tbtn" id="fullBtn" title="Full screen (F)">Full screen</button>
+      <button class="tbtn" id="hideBtn" title="Hide controls (H)">Hide UI</button>
+    </div>
+  </header>
+
+  <section class="left glass" id="leftPanel" data-obstacle aria-live="polite">
+    <p class="eyebrow" id="roomEyebrow">Room 01 · Ocean</p>
+    <h1 class="room-title" id="roomTitle">The ocean's weather</h1>
+    <p class="room-lede" id="roomLede"></p>
+    <div class="control" id="regionControl">
+      <span class="ctl-label" id="regionLabel">Region</span>
+      <div class="chips" id="regions" role="group" aria-labelledby="regionLabel"></div>
+    </div>
+    <div class="control" id="runControl" hidden>
+      <span class="ctl-label" id="runLabel">Forecast starts</span>
+      <div class="chips" id="runs" role="group" aria-labelledby="runLabel"></div>
+    </div>
+    <div class="control" id="modeControl">
+      <span class="ctl-label" id="modeLabel">Colour by</span>
+      <div class="chips" id="modes" role="group" aria-labelledby="modeLabel"></div>
+    </div>
+    <div class="control" id="layerControl" hidden>
+      <span class="ctl-label" id="layerLabel">Layers</span>
+      <div class="chips" id="layers" role="group" aria-labelledby="layerLabel"></div>
+    </div>
+    <div class="legend">
+      <span class="legend-title" id="legendTitle">Sea-surface temperature · °C</span>
+      <canvas id="legendBar" width="300" height="6"></canvas>
+      <div class="ticks" id="legendTicks"></div>
+    </div>
+    <p class="hint" id="hint">Drag to move · scroll to zoom · hover to read the water</p>
+  </section>
+
+  <aside class="right" id="rightPanel" data-obstacle aria-label="Insights"></aside>
+
+  <div class="timebar glass" id="timebar" data-obstacle>
+    <button class="play" id="play" aria-label="Pause">
+      <svg viewBox="0 0 12 12" id="playIcon" aria-hidden="true"><rect x="2" y="1" width="3" height="10"/><rect x="7" y="1" width="3" height="10"/></svg>
+    </button>
+    <div class="date">
+      <strong id="date">—</strong>
+      <span id="dateSub">—</span>
+    </div>
+    <div class="scrub">
+      <div class="rail" id="rail"></div>
+      <div class="marks" id="marks"></div>
+      <div class="fill" id="fill"></div>
+      <div class="knob" id="knob"></div>
+      <input type="range" id="scrubber" min="0" max="1" step="0.01" value="0" aria-label="Time">
+    </div>
+    <button class="tbtn" id="rate" title="Playback speed">1×</button>
+  </div>
+</div>
+<button class="reveal" id="reveal">Show UI</button>
+<div class="tour-chip" id="tourChip" hidden><span id="tourCaption">Tour</span><small>Touch anywhere to explore</small></div>
+<div class="probe" id="probe" hidden></div>
+
+<section class="intro" id="intro" aria-labelledby="introTitle">
+  <div class="intro-inner">
+    <p class="eyebrow">[ C01 ] · A data exhibit</p>
+    <h1 class="intro-title" id="introTitle">Undertow</h1>
+    <p class="intro-sub">The ocean has weather too. Satellites measure it from space, and a machine learns to forecast it.</p>
+    <ol class="intro-rooms">
+      <li><button class="intro-card glass" data-room="ocean"><span class="n">Room 01</span><span class="t">Ocean</span><span class="d">59 days of real currents, eddies and marine heatwaves across four of the world's great currents, and 45 years of warming.</span></button></li>
+      <li><button class="intro-card glass" data-room="forecast"><span class="n">Room 02</span><span class="t">Forecast</span><span class="d">A neural operator trained on seven years of satellite maps, tested against what the ocean actually did.</span></button></li>
+      <li><button class="intro-card glass" data-room="wind"><span class="n">Room 03</span><span class="t">Wind</span><span class="d">The whole planet's winds, storms and rain from NOAA's weather model, three days ahead.</span></button></li>
+    </ol>
+    <dl class="intro-stats" id="introStats"></dl>
+    <div class="intro-foot">
+      <button class="begin" id="begin">Begin</button>
+      <p id="introNote">Real data from NOAA · Free and open</p>
+    </div>
+  </div>
+</section>
+
+<aside class="about glass" id="about" hidden aria-labelledby="aboutTitle">
+  <header>
+    <h2 id="aboutTitle">About</h2>
+    <button class="tbtn" id="aboutClose">Close</button>
+  </header>
+  <section>
+    <h3>What you're seeing</h3>
+    <p>Every thread of light is a tracer carried by real measured or forecast flow. Tracers run tens of thousands of times faster than the water or air so that a day's pattern shows up in about a second. Each room's insights give the exact time-lapse factor.</p>
+  </section>
+  <section>
+    <h3>Ocean</h3>
+    <p>Radar altimeters on satellites measure the height of the sea surface to within a few centimetres. Warm eddies bulge up and cold ones dip. Because the Earth rotates, water flows along those slopes rather than down them, so the shape of the surface gives the current. NOAA turns it into daily current maps on a 25&nbsp;km grid. Temperature comes from NOAA's daily OISST analysis, which blends satellites, ships and buoys. "Vs normal" compares each day with its 1991–2020 average.</p>
+    <p>Eddies are found automatically wherever spin beats stretching (the Okubo–Weiss test), then followed from day to day. Their size is the radius of the fastest swirling ring.</p>
+  </section>
+  <section>
+    <h3>The model</h3>
+    <p id="aboutModel">A Fourier neural operator. It rewrites the last three days of currents as waves, keeps the largest ones, mixes them with weights it learned, and turns the result back into tomorrow's map. Feeding each forecast back in gives 14 days. It was trained on 2019–2024, tuned on 2025 and graded only on 2026, which it never saw.</p>
+  </section>
+  <section>
+    <h3>Wind</h3>
+    <p>Surface wind (10&nbsp;m), the jet stream (250&nbsp;hPa, about 10&nbsp;km up), air temperature, rain and pressure from one run of NOAA's Global Forecast System, every 6 hours for 72 hours. The globe's shadow shows where it is night at that hour.</p>
+  </section>
+  <section>
+    <h3>Sources</h3>
+    <ul id="sources"></ul>
+  </section>
+</aside>
+
+<div class="loading" id="loading" role="status">
+  <div class="loading-inner glass">
+    <span id="loadingText">Loading</span>
+    <div class="loading-bar"><i id="loadingBar"></i></div>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

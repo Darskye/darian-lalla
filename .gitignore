@@ -1,2 +1,4 @@
 node_modules
 dist
+tools/undertow/.cache
+__pycache__
