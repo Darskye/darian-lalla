@@ -444,7 +444,7 @@ export class SensorField {
     // keep the horizontal field of view in portrait so the whole field stays in frame
     const fov = aspect >= 1 ? 0.72 : Math.min(1.3, 2 * Math.atan(Math.tan(0.36) / aspect));
     const Pm = perspective(fov, aspect, 0.1, 60);
-    const target = [0, -0.1 + m * 0.35, 0];
+    const target = [0, -0.6 + m * 0.85, 0];
     const eye = [
       target[0] + this.dist * Math.cos(this.pitch) * Math.sin(this.yaw),
       target[1] + this.dist * Math.sin(this.pitch),

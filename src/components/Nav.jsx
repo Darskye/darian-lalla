@@ -4,6 +4,7 @@ import Scramble from "./Scramble.jsx";
 const LINKS = [
   ["Work", "#work"],
   ["Concepts", "#concepts"],
+  ["Hardware", "#hardware"],
   ["About", "#about"],
   ["Papers", "#papers"],
 ];
@@ -24,14 +25,14 @@ export default function Nav({ onSettings }) {
           <Scramble text="Darian Lalla" />
         </a>
         <nav className="nav-group" aria-label="Sections">
-          {LINKS.slice(0, 2).map(([t, h]) => (
+          {LINKS.slice(0, 3).map(([t, h]) => (
             <a key={h} href={h}>
               <Scramble text={t} />
             </a>
           ))}
         </nav>
         <nav className="nav-group" aria-label="More sections">
-          {LINKS.slice(2).map(([t, h]) => (
+          {LINKS.slice(3).map(([t, h]) => (
             <a key={h} href={h}>
               <Scramble text={t} />
             </a>

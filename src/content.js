@@ -200,8 +200,8 @@ export const CONCEPTS = [
 
 export const BUDDY = {
   title: "Claude Buddy",
-  body: "Desk-companion firmware for a LilyGo T-QT Pro (ESP32-S3, 0.85″ 128×128 display) that shows an AI coding agent's live state and token usage.",
-  tags: "Embedded · IoT · C++",
+  body: "Firmware for a desk companion that shows what Claude Code is doing right now and how much of the plan has been spent. It types while a tool runs, thinks in a bubble, and turns to face you when it needs an answer.",
+  tags: "Embedded · C++ · IoT",
   link: ["Source", "https://github.com/Darskye/claude-buddy"],
 };
 
@@ -280,11 +280,6 @@ export const PAPER = {
   ],
 };
 
-export const NOTES = [
-  { file: "compliance-is-a-data-problem.md", title: "Why environmental compliance is fundamentally a data problem" },
-  { file: "automation-as-a-climate-tool.md", title: "Automation as a climate tool for reporting workflows" },
-  { file: "a-non-traditional-path.md", title: "From environmental specialist to data & AI: a non-traditional path" },
-];
 
 export const ABOUT = [
   "I came to data through the environment. My bachelor's is in Environmental Science and Sustainable Technology and my master's is in Data Science. Along the way I learned that compliance, safety and sustainability are really data problems: messy, high-stakes, and full of patterns waiting to be found.",

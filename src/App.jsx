@@ -3,8 +3,9 @@ import { START_Y } from "./lib/debug.js";
 import { fontsReady } from "./lib/glyphs.js";
 import AsciiHero from "./components/AsciiHero.jsx";
 import Viewfinder from "./components/Viewfinder.jsx";
-import AboutSignal from "./components/AboutSignal.jsx";
-import Desktop from "./components/Desktop.jsx";
+import AboutPortrait from "./components/AboutPortrait.jsx";
+import Hardware from "./components/Hardware.jsx";
+import Papers from "./components/Papers.jsx";
 import AsciiPlate from "./components/AsciiPlate.jsx";
 import Clock from "./components/Clock.jsx";
 import Nav from "./components/Nav.jsx";
@@ -99,14 +100,19 @@ export default function App() {
           </div>
         </section>
 
-        <section id="papers" className="block">
-          <SectionHead title="Papers & notes" count="(01 + 03)" note="A workspace: drag the windows, orbit the model" />
-          <Desktop />
+        <section id="hardware" className="block">
+          <SectionHead title="Hardware" count="(01)" note="Code that leaves the screen" />
+          <Hardware />
         </section>
 
-        <section id="about" className="block">
-          <SectionHead title="About" count="" note="No photo. Just signal." />
-          <AboutSignal />
+        <section id="papers" className="block">
+          <SectionHead title="Papers" count="(01)" note="Peer-reviewed and published" />
+          <Papers />
+        </section>
+
+        <section id="about" className="block about-block">
+          <SectionHead title="About" count="" note="Self-portrait · move your cursor across it" />
+          <AboutPortrait />
         </section>
 
         <section id="contact" className="contact">
@@ -137,7 +143,7 @@ export default function App() {
           </div>
           <div className="foot-links">
             <a href="#work">Work</a>
-            <a href="#concepts">Concepts</a>
+            <a href="#hardware">Hardware</a>
             <a href="#papers">Papers</a>
           </div>
           <div className="foot-links">
